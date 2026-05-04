@@ -1,0 +1,61 @@
+plugins {
+    id 'java'
+    id 'application'
+    id 'org.openjfx.javafxplugin' version '0.0.14'
+}
+
+group = 'com.iae'
+version = '1.0.0'
+
+java {
+    sourceCompatibility = JavaVersion.VERSION_21
+    targetCompatibility = JavaVersion.VERSION_21
+}
+
+repositories {
+    mavenCentral()
+}
+
+// JavaFX 21 — controls (Button, TableView vb.) + fxml (FXML yükleme)
+// module-info.java kullanmıyoruz, plugin bunu otomatik halleder
+javafx {
+    version = '21'
+    modules = ['javafx.controls', 'javafx.fxml']
+}
+
+dependencies {
+    // SQLite gömülü veritabanı — sunucu gerektirmez (Gereksinim R1, NR-04)
+    implementation 'org.xerial:sqlite-jdbc:3.45.3.0'
+
+    // JUnit 5 API + Engine — birim ve entegrasyon testleri (Bölüm 9)
+    testImplementation 'org.junit.jupiter:junit-jupiter:5.10.2'
+
+    // Gradle'ın JUnit 5 test motorunu bulması için runtime bağımlılığı
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+}
+
+application {
+    mainClass = 'com.iae.Main'
+}
+
+// buildDir temiz ASCII yolda: Masaüstü içindeki ü harfi Gradle test-worker @classpath.txt
+// dosyasında encoding bozukluğuna neden oluyor; bu workaround ile kaçınılıyor
+buildDir = 'C:/tmp/iae-build'
+
+test {
+    useJUnitPlatform()
+    systemProperty 'file.encoding', 'UTF-8'
+}
+
+// Fat-JAR: tüm bağımlılıklar tek jar içinde — Inno Setup bu jar'ı dağıtır (R1)
+// destinationDirectory: proje kökündeki dist/ klasörü (buildDir Masaüstü ü sorunu nedeniyle dışarıda kalıyor)
+jar {
+    destinationDirectory = file("${rootDir}/temp")
+    manifest {
+        attributes 'Main-Class': 'com.iae.Main'
+    }
+    from configurations.runtimeClasspath.collect {
+        it.isDirectory() ? it : zipTree(it)
+    }
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
+}

@@ -1,17 +1,16 @@
-# Compiled class file
+# ── Gradle build outputs ──────────────────────────────────
+build/
+C:/tmp/iae-build/
+.gradle/
+.temp/
+
+# ── Compiled class files ──────────────────────────────────
 *.class
 
-# Log file
-*.log
-
-# BlueJ files
-*.ctxt
-
-# Mobile Tools for Java (J2ME)
-.mtj.tmp/
-
-# Package Files #
+# ── JAR / archive files ───────────────────────────────────
+# gradle-wrapper.jar HARIÇ diğer jar'lar commit edilmez
 *.jar
+!gradle/wrapper/gradle-wrapper.jar
 *.war
 *.nar
 *.ear
@@ -19,6 +18,22 @@
 *.tar.gz
 *.rar
 
-# virtual machine crash logs, see http://www.java.com/en/download/help/error_hotspot.xml
+# ── IDE metadata ──────────────────────────────────────────
+.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.ctxt
+
+# ── Log & crash files ────────────────────────────────────
+*.log
 hs_err_pid*
 replay_pid*
+
+# ── OS dosyaları ─────────────────────────────────────────
+.DS_Store
+Thumbs.db
+
+# ── BlueJ / Mobile Tools ─────────────────────────────────
+.mtj.tmp/
