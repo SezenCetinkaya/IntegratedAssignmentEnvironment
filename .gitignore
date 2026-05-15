@@ -3,6 +3,7 @@ build/
 C:/tmp/iae-build/
 .gradle/
 .temp/
+temp/
 
 # ── Compiled class files ──────────────────────────────────
 *.class

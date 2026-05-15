@@ -1,5 +1,14 @@
 package com.iae.core;
 
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.util.Properties;
+
 // TODO: Gözde Yılıkyılmaz tarafından implement edilecek (Core + Installer modülü)
 public class Configuration {
 
@@ -41,15 +50,50 @@ public class Configuration {
     public void setTimeoutSeconds(int timeoutSeconds) { this.timeoutSeconds = timeoutSeconds; }
 
     public void exportToFile(String path) {
-        // TODO: Gözde
+        Properties props = new Properties();
+
+        props.setProperty("configId", String.valueOf(configId));
+        props.setProperty("name", name);
+        props.setProperty("language", language);
+        props.setProperty("compilerPath", compilerPath);
+        props.setProperty("sourceFilename", sourceFilename);
+        props.setProperty("runCommand", runCommand);
+        props.setProperty("timeoutSeconds", String.valueOf(timeoutSeconds));
+
+        try (FileOutputStream out = new FileOutputStream(path)) {
+            props.store(out, "IAE Configuration");
+        } catch (IOException e) {
+            throw new RuntimeException("Configuration could not be exported: " + path, e);
+        }
     }
 
     public static Configuration importFromFile(String path) {
-        // TODO: Gözde
-        return null;
+        Properties props = new Properties();
+
+        try (FileInputStream in = new FileInputStream(path)) {
+            props.load(in);
+
+            Configuration config = new Configuration();
+            config.setConfigId(Integer.parseInt(props.getProperty("configId", "0")));
+            config.setName(props.getProperty("name", ""));
+            config.setLanguage(props.getProperty("language", ""));
+            config.setCompilerPath(props.getProperty("compilerPath", ""));
+            config.setSourceFilename(props.getProperty("sourceFilename", ""));
+
+            config.setRunCommand(props.getProperty("runCommand", ""));
+            config.setTimeoutSeconds(Integer.parseInt(props.getProperty("timeoutSeconds", "30")));
+
+            return config;
+        } catch (IOException e) {
+            throw new RuntimeException("Configuration could not be imported: " + path, e);
+        }
     }
 
     public void updateCompilerPath(String compilerPath) {
-        // TODO: Gözde
+        if (compilerPath == null || compilerPath.isBlank()) {
+            throw new IllegalArgumentException("Compiler path cannot be empty.");
+        }
+
+        this.compilerPath = compilerPath;
     }
 }
