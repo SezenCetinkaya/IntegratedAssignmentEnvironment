@@ -8,6 +8,8 @@ public class Main extends Application {
     @Override
     public void start(Stage primaryStage) {
         // TODO: FXML yüklemesi Uğur Emin Baynal tarafından eklenecek
+        com.iae.db.DatabaseHelper dbHelper = new com.iae.db.DatabaseHelper();
+        dbHelper.initialiseSchema();
         primaryStage.setTitle("IAE — Integrated Assignment Environment");
         primaryStage.setWidth(900);
         primaryStage.setHeight(600);
