@@ -1,6 +1,7 @@
 # ── Gradle build outputs ──────────────────────────────────
 build/
 C:/tmp/iae-build/
+demo/
 .gradle/
 .gradle-home/
 .openjfx-cache/

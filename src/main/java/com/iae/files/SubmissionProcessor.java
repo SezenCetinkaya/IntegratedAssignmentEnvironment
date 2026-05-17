@@ -80,11 +80,12 @@ public class SubmissionProcessor {
 
             zipExtractor.extract(zipFile, workspace);
 
-            fileLocator.locate(workspace, config.getSourceFilename());
+            File sourceFile = fileLocator.locate(workspace, config.getSourceFilename());
+            File executionDir = sourceFile.getParentFile();
 
             commandRunner.setTimeoutSeconds(config.getTimeoutSeconds());
 
-            ProcessResult compileResult = commandRunner.compile(config, workspace);
+            ProcessResult compileResult = commandRunner.compile(config, executionDir);
 
             if (compileResult.hasFailed()) {
                 result.markCompiled("COMPILE_ERROR");
@@ -97,14 +98,8 @@ public class SubmissionProcessor {
 
             // Prototype seviyesinde runCommand varsa çalıştır
             if (config.getRunCommand() != null && !config.getRunCommand().isBlank()) {
-                String[] runParts = config.getRunCommand().split("\\s+");
-                ProcessResult runResult = commandRunner.run(runParts, workspace);
-
-                if (runResult.hasFailed()) {
-                    result.markRun("RUNTIME_ERROR");
-                    result.appendError(runResult.getCombinedOutput());
-                    return result;
-                }
+                String[] runParts = normalizeRunCommand(config.getRunCommand()).split("\\s+");
+                ProcessResult runResult = commandRunner.run(runParts, executionDir);
 
                 boolean passed = outputComparator.compare(
                         runResult.getStdout(),
@@ -112,9 +107,24 @@ public class SubmissionProcessor {
                         ignoreCase
                 );
 
-                result.markRun(passed ? "PASS" : "FAIL");
-
-                if (!passed) {
+                if (runResult.isTimedOut()) {
+                    result.markRun("RUNTIME_ERROR");
+                    result.appendError(runResult.getCombinedOutput());
+                } else if (passed) {
+                    result.markRun("PASS");
+                    if (runResult.hasFailed()) {
+                        String warning = "Program produced expected output but exited with code "
+                                + runResult.getExitCode() + ".";
+                        if (!runResult.getStderr().isBlank()) {
+                            warning += " Stderr: " + runResult.getStderr();
+                        }
+                        result.appendError(warning);
+                    }
+                } else if (runResult.hasFailed()) {
+                    result.markRun("RUNTIME_ERROR");
+                    result.appendError(runResult.getCombinedOutput());
+                } else {
+                    result.markRun("FAIL");
                     result.appendError("Student output did not match the expected output.");
                 }
             } else {
@@ -162,6 +172,15 @@ public class SubmissionProcessor {
         // TODO: Gözde
         String name = zipFile.getName();
         return name.endsWith(".zip") ? name.substring(0, name.length() - 4) : name;
+    }
+
+    private String normalizeRunCommand(String runCommand) {
+        if (runCommand == null) {
+            return "";
+        }
+        String normalized = runCommand.trim();
+        normalized = normalized.replaceAll("-cp\\.(?=\\S)", "-cp . ");
+        return normalized;
     }
 
     /**

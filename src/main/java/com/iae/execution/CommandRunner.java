@@ -13,7 +13,16 @@ import java.util.concurrent.TimeUnit;
 public class CommandRunner {
 
     public ProcessResult run(String[] command, File workDir) {
-        ProcessBuilder pb = new ProcessBuilder(command);
+        // Windows'ta 'main.exe' gibi yerel dizindeki dosyalar PATH'te aranır,
+        // bulunamazsa hata verir. cmd /c ile sarmalayarak mevcut dizinden çalıştırırız.
+        String[] finalCommand = command;
+        if (System.getProperty("os.name", "").toLowerCase().contains("win")) {
+            finalCommand = new String[command.length + 2];
+            finalCommand[0] = "cmd";
+            finalCommand[1] = "/c";
+            System.arraycopy(command, 0, finalCommand, 2, command.length);
+        }
+        ProcessBuilder pb = new ProcessBuilder(finalCommand);
         pb.directory(workDir);
 
         StringBuilder stdout = new StringBuilder();

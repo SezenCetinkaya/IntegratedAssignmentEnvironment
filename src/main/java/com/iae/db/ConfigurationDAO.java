@@ -50,11 +50,15 @@ public class ConfigurationDAO {
             return;
         }
 
+        // NOT: CommandRunner.compile() her zaman sourceFilename'i sona ekler.
+        // Bu yüzden compileArgs içine kaynak dosya adı YAZILMAMALI.
+        // Üretilen komut: [compilerPath] [compileArgs...] [sourceFilename]
+
         Configuration c = new Configuration();
         c.setName("C Programming");
         c.setLanguage("C");
         c.setCompilerPath("gcc");
-        c.setCompileArgs("main.c -o main");
+        c.setCompileArgs("-o main");        // gcc -o main main.c
         c.setSourceFilename("main.c");
         c.setRunCommand("main.exe");
         c.setInterpreted(false);
@@ -65,9 +69,9 @@ public class ConfigurationDAO {
         java.setName("Java");
         java.setLanguage("Java");
         java.setCompilerPath("javac");
-        java.setCompileArgs("Main.java");
+        java.setCompileArgs("");            // javac Main.java
         java.setSourceFilename("Main.java");
-        java.setRunCommand("java Main");
+        java.setRunCommand("java -cp . Main");
         java.setInterpreted(false);
         java.setTimeoutSeconds(45);
         insert(java);
