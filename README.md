@@ -1,10 +1,26 @@
-# IAE — Integrated Assignment Environment
+﻿# IAE — Integrated Assignment Environment
 
-> **CE 316 Project** — Izmir University of Economics, Faculty of Engineering  
+> **CE 316 Project** — Izmir University of Economics, Faculty of Engineering
 > Advisor: Asst. Prof. Dr. İlker KORKMAZ | May 2026
 
-A standalone desktop application that automates the evaluation of student programming assignments on Windows. Lecturers can compile, run, and compare student submissions in batch — no manual grading.
+IAE is a desktop application designed to automate the evaluation of student programming assignments on Windows. The application extracts submitted ZIP files, runs the code, compares outputs, and stores results in a SQLite database.
 
+## Features
+
+- JavaFX-based user interface
+- Secure extraction of student ZIP submissions
+- Isolated temporary workspace per student
+- Automatic output comparison (handles CRLF differences and optional case sensitivity)
+- SQLite-backed project and result storage
+- Gradle wrapper for single-command build and run
+
+## Technology
+
+- Java 21
+- JavaFX 21
+- Gradle 8.7
+- SQLite (org.xerial:sqlite-jdbc)
+- JUnit 5
 
 ## Project Structure
 
@@ -12,132 +28,78 @@ A standalone desktop application that automates the evaluation of student progra
 src/
 ├── main/
 │   ├── java/com/iae/
-│   │   ├── Main.java                          # JavaFX entry point
+│   │   ├── AppLauncher.java
+│   │   ├── Main.java
 │   │   ├── core/
-│   │   │   ├── Configuration.java             # Language config model
-│   │   │   ├── Project.java                   # Project model
-│   │   │   ├── StudentResult.java             # Per-student result model
-│   │   │   ├── TestCase.java                  # Test case model
-│   │   │   ├── Report.java                    # Report aggregator
-│   │   │   ├── Logger.java                    # File-based logger
-│   │   │   └── Validator.java                 # Config & project validator
 │   │   ├── db/
-│   │   │   ├── DatabaseHelper.java            # SQLite connection & schema
-│   │   │   ├── ProjectDAO.java                # Project persistence
-│   │   │   ├── ConfigurationDAO.java          # Config persistence
-│   │   │   └── StudentResultDAO.java          # Result persistence
 │   │   ├── execution/
-│   │   │   ├── CommandRunner.java             # ProcessBuilder wrapper
-│   │   │   └── ProcessResult.java             # Command output model
-│   │   ├── files/                             
-│   │   │   ├── ZipExtractor.java              # ZIP extraction, zip-slip safe
-│   │   │   ├── WorkspaceManager.java          # Temp workspace lifecycle
-│   │   │   ├── FileLocator.java               # Case-insensitive source finder
-│   │   │   ├── OutputComparator.java          # Output diff (CRLF + ignoreCase)
-│   │   │   └── InvalidZipException.java       # Custom exception
+│   │   ├── files/
 │   │   └── gui/
-│   │       ├── MainController.java            # Main window controller
-│   │       ├── ConfigurationController.java   # Config editor controller
-│   │       └── ResultsController.java         # Results table controller
 │   └── resources/com/iae/gui/
-│       ├── main-view.fxml                     # Main window layout
-│       ├── configuration-view.fxml            # Config editor layout
-│       ├── results-view.fxml                  # Results table layout
-│       └── styles.css                         # JavaFX stylesheet
-└── test/java/com/iae/files/                  
-    ├── ZipExtractorTest.java                  # 8 tests (valid, corrupt, zip-slip)
-    ├── WorkspaceManagerTest.java              # 5 tests (create, clean, isolation)
-    ├── FileLocatorTest.java                   # 6 tests (case-insensitive, nested)
-    └── OutputComparatorTest.java              # 10 tests (CRLF, ignoreCase, diff msg)
+│       ├── main-view.fxml
+│       ├── configuration-view.fxml
+│       ├── results-view.fxml
+│       └── styles.css
+└── test/java/com/iae/
 ```
 
----
+### Main modules
 
-## Technology Stack
+- `com.iae.AppLauncher` — JavaFX application entry point
+- `com.iae.Main` — main application class
+- `com.iae.core` — project, configuration, student result, and report models
+- `com.iae.db` — SQLite DAO layer
+- `com.iae.execution` — external process execution and result handling
+- `com.iae.files` — ZIP extraction, workspace management, source lookup, output comparison
+- `com.iae.gui` — JavaFX controllers
 
-| Category | Technology | Version |
-|---|---|---|
-| Language | Java | 21 LTS |
-| GUI Framework | JavaFX | 21 |
-| Database | SQLite via JDBC | 3.45.3.0 |
-| Build Tool | Gradle | 8.7 |
-| Test Framework | JUnit 5 | 5.10.2 |
-| Installer | Inno Setup | 6.3.3 |
+## Requirements
 
----
+- Java 21 JDK must be installed
+- Gradle is not required; the project includes `gradlew.bat`
 
-## Build & Run
-
-### Prerequisites
-- Java 21 JDK (Temurin recommended)
-- No Gradle install needed — wrapper is included
+## Quick Start
 
 ### Run the application
+
 ```powershell
 .\gradlew.bat run
 ```
 
-### Run all tests
+### Run tests
+
 ```powershell
 .\gradlew.bat test
 ```
 
-Expected output: `BUILD SUCCESSFUL` — 29 tests, 0 failures.
+### Build executable JAR
 
-### Build fat-JAR
 ```powershell
 .\gradlew.bat jar
 ```
 
-Output: `C:/tmp/iae-build/libs/CE_316_Project-1.0.0.jar`
+### Package Windows EXE
 
-> **Note:** `buildDir` is set to `C:/tmp/iae-build` (not the default `build/`) Do not change this line in `build.gradle`.
-
-
-## Architecture
-
-The application follows the **MVC** pattern layered over a service and data-access tier:
-
-```
-View (FXML)  →  Controller  →  Service Layer  →  DAO Layer  →  SQLite
-                                    ↓
-                      ZipExtractor / CommandRunner / OutputComparator
+```powershell
+.\gradlew.bat launch4j
 ```
 
-Dependency flow is strictly **top-down** — no lower layer references a higher one.
+## Usage
 
----
+1. Launch the application.
+2. Enter test inputs, expected outputs, and build settings in the configuration screen.
+3. Load student ZIP submissions.
+4. Start execution: each submission is extracted, compiled, executed, and compared.
+5. Review results in the `Results` tab.
 
-## files/ Module API Reference
+## Notes
 
-> All classes are in `com.iae.files`.
+- `OutputComparator` normalizes `\r\n` and `\n` differences when comparing outputs.
+- `ZipExtractor` protects against zip-slip attacks.
+- `WorkspaceManager` uses a temporary working directory for each student and cleans it after processing.
 
-### ZipExtractor
-```java
-File extract(File zipFile, File targetDir) throws InvalidZipException
-boolean validateArchive(File zipFile)
-```
-Extracts a student ZIP into `targetDir`. Guards against zip-slip attacks. Throws `InvalidZipException` on empty, corrupt, or missing files.
+## Development
 
-### WorkspaceManager
-```java
-File   createWorkspace(String studentId) throws IOException
-void   cleanWorkspace(String studentId)  throws IOException
-```
-Creates and destroys a per-student temporary directory under the system temp folder.
-
-### FileLocator
-```java
-File locate(File workspaceDir, String filename) throws FileNotFoundException
-```
-Recursively searches for `filename` (case-insensitive). Handles `main.c` vs `Main.c` transparently.
-
-### OutputComparator
-```java
-boolean compare(String actualOutput, String expectedOutput)
-boolean compare(String actualOutput, String expectedOutput, boolean ignoreCase)
-boolean compareAgainstExpected(String actual, String expected)
-boolean compareAgainstExpected(String actual, String expected, boolean ignoreCase)
-String  getCombinedOutput()   // returns line-level diff message on mismatch
-```
-Normalises `\r\n` → `\n`, trims leading/trailing whitespace, then compares line-by-line. `ignoreCase=true` disables case sensitivity.
+- The code is written for Java 21.
+- Tests are implemented with JUnit 5.
+- JavaFX FXML files are located under `src/main/resources/com/iae/gui`.
