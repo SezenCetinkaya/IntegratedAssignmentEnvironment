@@ -138,6 +138,37 @@ public class ResultsController {
         updateStats(List.of(), false);
     }
 
+    // ============================================================
+    // TODO [OWNER: Sıla Karabağ (DB + Reports)] [PHASE: 2] [REQ: 9]
+    // GÖREV: CSV export uygula — Results tablosunu dosyaya aktar
+    // AÇIKLAMA:
+    //   Sonuçları dışa aktarma butonu/menüsü yok. Hoca sonuçları başka araçlara
+    //   taşıyabilmeli. Minimum: CSV. Sonradan PDF eklenebilir.
+    // ADIMLAR:
+    //   1. FXML'de File menüsüne "Export Results..." menü öğesi ekle (Uğur ile koordine).
+    //   2. Bu metodu @FXML ile işaretle ve handler olarak bağla.
+    //   3. Metod gövdesi:
+    //      FileChooser fc = new FileChooser();
+    //      fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV", "*.csv"));
+    //      File f = fc.showSaveDialog(resultsTable.getScene().getWindow());
+    //      if (f == null) return;
+    //      try (PrintWriter pw = new PrintWriter(f)) {
+    //          pw.println("studentId,compileStatus,runStatus,executionTimeMs,error");
+    //          for (StudentResult r : tableData) {
+    //              pw.printf("%s,%s,%s,%d,\"%s\"%n",
+    //                  r.getStudentId(), r.getCompileStatus(), r.getRunStatus(),
+    //                  r.getExecutionTimeMs() == null ? 0 : r.getExecutionTimeMs(),
+    //                  r.getCompileErrorLog() == null ? "" :
+    //                      r.getCompileErrorLog().replace("\"", "\"\""));
+    //          }
+    //      }
+    // KABUL KRİTERİ:
+    //   Excel'de açıldığında satırlar bozulmadan görünüyor, virgül/quote escape doğru.
+    // ============================================================
+    public void exportReport() {
+        // Yukarıdaki TODO'yu uygula
+    }
+
     @FXML
     public void refreshResults() {
         if (boundProject != null) {

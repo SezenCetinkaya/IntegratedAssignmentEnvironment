@@ -12,7 +12,6 @@ import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.List;
 
-// TODO: Gözde Yılıkyılmaz tarafından implement edilecek (Core + Installer modülü — AssignmentRunner)
 public class SubmissionProcessor {
 
     private final ZipExtractor zipExtractor           = new ZipExtractor();
@@ -32,6 +31,23 @@ public class SubmissionProcessor {
      * @param ignoreCase      Çıktı karşılaştırmasında büyük/küçük harf duyarsızlığı
      * @return                Her öğrenci için bir StudentResult listesi
      */
+    // ============================================================
+    // TODO [OWNER: Talat Karasakal (Execution)] [PHASE: 1] [REQ: 6, 8]
+    // GÖREV: processAll/processSingle imzasına runArguments ekle
+    // AÇIKLAMA:
+    //   GUI'deki runArgsField değeri MainController'da project'e kaydediliyor
+    //   ama processAll/processSingle'a parametre olarak geçilmiyor.
+    //   Öğrenci programı hiçbir zaman run argümanı almıyor.
+    // ADIMLAR:
+    //   1. processAll imzasını güncelle:
+    //      processAll(File submissionsDir, Configuration config,
+    //                 String expectedOutput, boolean ignoreCase, String runArguments)
+    //      (alternatif: project nesnesini parametre yap, getRunArguments() üzerinden oku)
+    //   2. processSingle'a da aynı şekilde runArguments ilet.
+    //   3. commandRunner.run(...) çağrısına runArguments'ı geç.
+    // KABUL KRİTERİ:
+    //   Argümanlar olmadan ve argümanlarla çalıştırma davranışı farklı olmalı.
+    // ============================================================
     public List<StudentResult> processAll(File submissionsDir,
                                           Configuration config,
                                           String expectedOutput,
@@ -85,6 +101,13 @@ public class SubmissionProcessor {
 
             commandRunner.setTimeoutSeconds(config.getTimeoutSeconds());
 
+            if (config.isInterpreted()) {
+                if (!new File(executionDir, config.getSourceFilename()).exists()) {
+                    result.markCompiled("SOURCE_NOT_FOUND");
+                    result.appendError("Beklenen kaynak dosya yok: " + config.getSourceFilename());
+                    return result;
+                }
+            }
             ProcessResult compileResult = commandRunner.compile(config, executionDir);
 
             if (compileResult.hasFailed()) {
@@ -99,6 +122,18 @@ public class SubmissionProcessor {
             // Prototype seviyesinde runCommand varsa çalıştır
             if (config.getRunCommand() != null && !config.getRunCommand().isBlank()) {
                 String[] runParts = normalizeRunCommand(config.getRunCommand()).split("\\s+");
+                // ============================================================
+                // TODO [OWNER: Talat Karasakal (Execution)] [PHASE: 3] [REQ: 4]
+                // GÖREV: executionTimeMs'i ölç ve result'a yaz
+                // AÇIKLAMA:
+                //   StudentResult'ta alan ve DB kolonu var, UI'da kolon var — ama ölçüm hiç yapılmıyor.
+                //   Her öğrenci için UI "0 ms" ya da boş gösteriyor, bu yanıltıcı.
+                // ADIMLAR:
+                //   1. commandRunner.run() çağrısından önce: long start = System.nanoTime();
+                //   2. Çağrıdan sonra: result.setExecutionTimeMs((int)((System.nanoTime()-start)/1_000_000));
+                // KABUL KRİTERİ:
+                //   Results tablosunda executionTimeMs kolonu her satır için pozitif ms değeri gösteriyor.
+                // ============================================================
                 ProcessResult runResult = commandRunner.run(runParts, executionDir);
 
                 boolean passed = outputComparator.compare(
@@ -107,6 +142,26 @@ public class SubmissionProcessor {
                         ignoreCase
                 );
 
+                // ============================================================
+                // TODO [OWNER: Talat Karasakal (Execution)] [PHASE: 3] [REQ: 7, 8]
+                // GÖREV: Runtime error'ı PASS gibi gösterme bug'ını düzelt
+                // AÇIKLAMA:
+                //   Hoca raporu: "runtime error pass gibi görünüyo"
+                //   Şu an: passed=true ise, exitCode!=0 olsa bile PASS veriliyor (satır altında).
+                //   Process exit code != 0 ise çıktı karşılaştırması yapılmamalı.
+                // ADIMLAR:
+                //   1. isTimedOut kontrolünden SONRA, passed kontrolünden ÖNCE şunu ekle:
+                //      if (runResult.getExitCode() != 0 && !runResult.isTimedOut()) {
+                //          result.markRun("RUNTIME_ERROR");
+                //          result.appendError("Exit code: " + runResult.getExitCode()
+                //              + (runResult.getStderr().isBlank() ? "" : "\n" + runResult.getStderr()));
+                //          return result;
+                //      }
+                //   2. Bu sayede exitCode!=0 olan programlar PASS sayılmaz.
+                // KABUL KRİTERİ:
+                //   Segfault eden veya exception fırlatan öğrenci kodu RUNTIME_ERROR
+                //   olarak raporlanıyor, yanlışlıkla PASS sayılmıyor.
+                // ============================================================
                 if (runResult.isTimedOut()) {
                     result.markRun("RUNTIME_ERROR");
                     result.appendError(runResult.getCombinedOutput());
@@ -160,7 +215,6 @@ public class SubmissionProcessor {
      * Dizin içindeki tüm .zip dosyalarını döndürür.
      */
     private File[] findZipFiles(File dir) {
-        // TODO: Gözde
         return dir.listFiles(f -> f.isFile() && f.getName().toLowerCase().endsWith(".zip"));
     }
 
@@ -169,7 +223,6 @@ public class SubmissionProcessor {
      * Örnek: "20220602021.zip" → "20220602021"
      */
     private String extractStudentId(File zipFile) {
-        // TODO: Gözde
         String name = zipFile.getName();
         return name.endsWith(".zip") ? name.substring(0, name.length() - 4) : name;
     }
@@ -187,7 +240,6 @@ public class SubmissionProcessor {
      * Beklenen çıktıyı bir dosyadan okur.
      */
     public String readExpectedOutput(File expectedOutputFile) throws IOException {
-        // TODO: Gözde
         return Files.readString(expectedOutputFile.toPath());
     }
 }

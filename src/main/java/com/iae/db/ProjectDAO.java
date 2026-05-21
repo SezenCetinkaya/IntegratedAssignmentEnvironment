@@ -34,6 +34,19 @@ public class ProjectDAO {
         return -1;
     }
 
+    // ============================================================
+    // TODO [OWNER: Sıla Karabağ (DB)] [PHASE: 1] [REQ: 3, 10]
+    // GÖREV: findAll() cache yapma, her çağrıda DB sorgusu çalıştır
+    // AÇIKLAMA:
+    //   Eğer ileride statik cache eklenirse, Open Project dialog'u bayat veri gösterebilir.
+    //   Her çağrıda taze ResultSet ile dönüleceği garanti altına alınmalı.
+    // ADIMLAR:
+    //   1. Eğer static List<Project> cache field'i varsa kaldır.
+    //   2. Her çağrıda taze ResultSet ile döndür (mevcut implementasyon bu şekilde —
+    //      ilerleyen refactoring'lerde bu davranışı bozmamaya dikkat et).
+    // KABUL KRİTERİ:
+    //   Aynı session içinde bir proje insert/update edildiğinde, bir sonraki findAll() onu da içeriyor.
+    // ============================================================
     public List<Project> findAll() {
         List<Project> projects = new ArrayList<>();
         String sql = "SELECT * FROM Project";

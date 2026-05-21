@@ -72,6 +72,26 @@ jar {
     duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
+// ============================================================
+// TODO [OWNER: Gözde Yılıkyılmaz (Installer)] [PHASE: 4] [REQ: 1]
+// GÖREV: JavaFX'i installer paketine dahil et, launch4j VM args ayarla
+// AÇIKLAMA:
+//   PDF: "Java var ama JavaFX yok" — JavaFX'i app ile birlikte dağıtmak gerekiyor.
+//   Şu an bundledJrePath=%JAVA_HOME% kullanıcının JRE'sine bağımlı; JavaFX yok.
+// SEÇENEK 1 (Önerilen — launch4j + bundled JavaFX):
+//   1. JavaFX SDK 21'i projeye indir: javafx/lib altına .jar'ları, javafx/bin altına
+//      .dll'leri koy.
+//   2. launch4j config'ine VM options ekle:
+//      jvmOptions = ['--module-path', '%EXEDIR%\\javafx\\lib',
+//                    '--add-modules', 'javafx.controls,javafx.fxml']
+//   3. Inno Setup [Files] block'una javafx/ klasörünü recursesubdirs ile kopyala.
+// SEÇENEK 2 (Daha karmaşık — jpackage):
+//   1. JDK jpackage ile self-contained .exe + JVM bundle üret.
+//   2. Ama Inno Setup requirement PDF'te açık — önce Seçenek 1'i dene.
+// KABUL KRİTERİ:
+//   JavaFX kurulu olmayan temiz Windows'ta uygulama açılıyor,
+//   "Module javafx.controls not found" hatası yok.
+// ============================================================
 launch4j {
     mainClassName = 'com.iae.AppLauncher'
     outfile = 'IAE.exe'

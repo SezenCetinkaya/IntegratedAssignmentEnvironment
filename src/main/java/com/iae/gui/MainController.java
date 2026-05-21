@@ -6,6 +6,7 @@ import com.iae.core.StudentResult;
 import com.iae.db.ConfigurationDAO;
 import com.iae.db.ProjectDAO;
 import com.iae.db.StudentResultDAO;
+import com.iae.files.ResourceExtractor;
 import com.iae.files.SubmissionProcessor;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
@@ -21,7 +22,6 @@ import javafx.scene.layout.VBox;
 import javafx.util.Duration;
 import javafx.util.StringConverter;
 import java.awt.Desktop;
-import java.net.URI;
 import javafx.stage.DirectoryChooser;
 import javafx.stage.FileChooser;
 import javafx.stage.Modality;
@@ -228,6 +228,26 @@ public class MainController {
         projectCard.getStyleClass().add("section-card-accent");
     }
 
+    // ============================================================
+    // TODO [OWNER: Uğur Emin Baynal (GUI) + Sıla Karabağ (DB)] [PHASE: 1] [REQ: 3, 10]
+    // GÖREV: Open Project ekranı bayat veri gösteriyor; config değişmeden kalıyor
+    // AÇIKLAMA:
+    //   Proje listesi cache'lenebiliyor veya UI yüklenirken önceki proje state'i kalıyor.
+    //   Hoca bu bug'ı raporladı (WhatsApp notu).
+    // ADIMLAR:
+    //   1. onOpenProject() içinde her seferinde DB'den taze çek: projectDAO.findAll()
+    //      (cachedProjects gibi bir field varsa kaldır).
+    //   2. Seçilen Project yüklenince UI alanlarını güncel değerlerle doldur:
+    //      currentProject = projectDAO.findById(selectedId);
+    //      Configuration config = configDAO.findById(currentProject.getConfigId());
+    //      configNameField.setText(config != null ? config.getName() : "");
+    //      submissionDirField.setText(currentProject.getSubmissionDir());
+    //      runArgsField.setText(currentProject.getRunArguments());
+    //      expectedOutputField.setText(currentProject.getExpectedOutputPath());
+    //   3. Config değişikliği varsa: currentProject.setConfigId(newConfig.getId());
+    //      projectDAO.update(currentProject);
+    // KABUL KRİTERİ: Proje aç → config combobox doğru config'i gösteriyor. Config değişikliği kalıcı.
+    // ============================================================
     @FXML
     public void onOpenProject() {
         List<Project> projects = projectDAO.findAll();
@@ -253,6 +273,21 @@ public class MainController {
     }
 
     @FXML
+    // ============================================================
+    // TODO [OWNER: Sezen Çetinkaya (Files) + Uğur Emin Baynal (GUI)] [PHASE: 2] [REQ: 10]
+    // GÖREV: onSaveProject() ve onOpenProject()'i ProjectFileService ile bağla
+    // AÇIKLAMA:
+    //   Şu an "Save" sadece DB'ye yazıyor, taşınabilir .iaeproject dosyası üretmiyor.
+    //   ProjectFileService.java stub'ı oluşturuldu (com.iae.service paketi).
+    // ADIMLAR:
+    //   1. ProjectFileService implement edildikten sonra buraya FileChooser ekle.
+    //   2. onSaveProject(): FileChooser ile hedef .iaeproject yolu seç → service.saveProject() çağır.
+    //   3. onOpenProject(): FileChooser ile .iaeproject seç → service.openProject() çağır,
+    //      dönen Project'i currentProject'e ata, UI'ı güncelle.
+    // KABUL KRİTERİ:
+    //   "Export Project" butonu .iaeproject dosyası üretiyor.
+    //   "Import Project" butonu .iaeproject dosyasından projeyi geri yüklüyor.
+    // ============================================================
     public void onSaveProject() {
         if (currentProject == null) {
             showWarning("No project", "Open or create a project first.");
@@ -345,6 +380,21 @@ public class MainController {
             @Override
             protected List<StudentResult> call() {
                 SubmissionProcessor processor = new SubmissionProcessor();
+                // ============================================================
+                // TODO [OWNER: Uğur Emin Baynal (GUI)] [PHASE: 1] [REQ: 6, 8]
+                // GÖREV: runArgsField.getText() değerini processAll'a ilet
+                // AÇIKLAMA:
+                //   project.setRunArguments(...) yapılıyor ama bu değer processAll'a
+                //   parametre olarak geçilmiyor. Öğrenci programı argümanları almıyor.
+                // ADIMLAR:
+                //   1. processAll imzası runArguments parametresi alacak şekilde güncellendikten sonra:
+                //      processor.processAll(submissionsDir, config, expected, false,
+                //                           project.getRunArguments())
+                //   2. Alternatif: SubmissionProcessor'a project'i geç ve
+                //      processSingle içinde project.getRunArguments() oku.
+                // KABUL KRİTERİ:
+                //   GUI'ye "hello world" yazıp Run'a basınca processAll'a "hello world" iletiliyor.
+                // ============================================================
                 return processor.processAll(submissionsDir, config, expected, false);
             }
         };
@@ -397,16 +447,12 @@ public class MainController {
     @FXML
     public void onOpenHelp() {
         try {
-            java.net.URL manual = getClass().getResource("/com/iae/gui/help/manual.html");
-            if (manual == null) {
-                showError("Help unavailable", "User manual file not found in application resources.");
+            if (!Desktop.isDesktopSupported()) {
+                showInfo("User Manual", "Desktop browsing is not supported on this platform.");
                 return;
             }
-            if (Desktop.isDesktopSupported()) {
-                Desktop.getDesktop().browse(new URI(manual.toExternalForm()));
-            } else {
-                showInfo("User Manual", "Open this file in your browser:\n" + manual.toExternalForm());
-            }
+            File manual = ResourceExtractor.extractResource("/com/iae/gui/help/manual.html", "iae-manual");
+            Desktop.getDesktop().browse(manual.toURI());
         } catch (Exception ex) {
             showError("Help unavailable", "Could not open user manual: " + ex.getMessage());
         }

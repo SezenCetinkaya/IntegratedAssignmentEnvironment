@@ -1,6 +1,5 @@
 package com.iae.core;
 
-// TODO: Gözde Yılıkyılmaz tarafından implement edilecek (Core + Installer modülü)
 public class StudentResult {
 
     private int resultId;
