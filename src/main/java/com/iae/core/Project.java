@@ -75,6 +75,17 @@ public class Project {
     public void removeResult(int resultId) {
         results.removeIf(result -> result.getResultId() == resultId);
     }
+    @Override
+    public String toString() {
+        if (name != null && !name.isBlank()) {
+            if (createdAt != null ) {
+                return name + " - " + createdAt;
+            }
+            return name;
+        }
+
+        return "Unnamed Project";
+    }
     public static Project load(int id) {
         return null;
     }

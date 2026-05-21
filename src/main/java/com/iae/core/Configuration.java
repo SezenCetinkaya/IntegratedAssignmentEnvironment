@@ -84,6 +84,8 @@ public class Configuration {
         props.setProperty("sourceFilename", sourceFilename);
         props.setProperty("runCommand", runCommand);
         props.setProperty("timeoutSeconds", String.valueOf(timeoutSeconds));
+        props.setProperty("compileArgs", compileArgs == null ? "" : compileArgs);
+        props.setProperty("isInterpreted", String.valueOf(isInterpreted));
 
         try (FileOutputStream out = new FileOutputStream(path)) {
             props.store(out, "IAE Configuration");
@@ -115,6 +117,8 @@ public class Configuration {
             config.setName(props.getProperty("name", ""));
             config.setLanguage(props.getProperty("language", ""));
             config.setCompilerPath(props.getProperty("compilerPath", ""));
+            config.setCompileArgs(props.getProperty("compileArgs", ""));
+            config.setInterpreted(Boolean.parseBoolean(props.getProperty("isInterpreted", "false")));
             config.setSourceFilename(props.getProperty("sourceFilename", ""));
 
             config.setRunCommand(props.getProperty("runCommand", ""));
