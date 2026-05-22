@@ -12,34 +12,21 @@ import java.util.concurrent.TimeUnit;
 
 public class CommandRunner {
 
-    // ============================================================
-    // TODO [OWNER: Talat Karasakal (Execution)] [PHASE: 1] [REQ: 6, 8]
-    // GÖREV: run komutuna kullanıcı argümanlarını güvenli şekilde ekle
-    // AÇIKLAMA:
-    //   Şu an run(String[] command, File workDir) imzası runArguments almıyor.
-    //   SubmissionProcessor, GUI'den gelen run args'ı geçemiyor.
-    // ADIMLAR:
-    //   1. İmzayı güncelle: run(String[] command, String runArguments, File workDir)
-    //   2. ProcessBuilder'a argümanları ekle:
-    //      List<String> args = new ArrayList<>(Arrays.asList(command));
-    //      if (runArguments != null && !runArguments.isBlank()) {
-    //          args.addAll(Arrays.asList(runArguments.split("\\s+")));
-    //      }
-    //      new ProcessBuilder(args).directory(workDir).start();
-    //   3. String concat (command + " " + runArguments) YAPMA — boşluk içeren
-    //      argümanlar bozulur. split("\\s+") veya satır başına bir argüman kullan.
-    // KABUL KRİTERİ:
-    //   "apple banana" girilince öğrenci programı argv[1]="apple", argv[2]="banana" alıyor.
-    // ============================================================
-    public ProcessResult run(String[] command, File workDir) {
+    public ProcessResult run(String[] command, String runArguments, File workDir) {
+        List<String> argList = new ArrayList<>(Arrays.asList(command));
+        if (runArguments != null && !runArguments.isBlank()) {
+            argList.addAll(Arrays.asList(runArguments.trim().split("\\s+")));
+        }
+        String[] mergedCommand = argList.toArray(new String[0]);
+
         // Windows'ta 'main.exe' gibi yerel dizindeki dosyalar PATH'te aranır,
         // bulunamazsa hata verir. cmd /c ile sarmalayarak mevcut dizinden çalıştırırız.
-        String[] finalCommand = command;
+        String[] finalCommand = mergedCommand;
         if (System.getProperty("os.name", "").toLowerCase().contains("win")) {
-            finalCommand = new String[command.length + 2];
+            finalCommand = new String[mergedCommand.length + 2];
             finalCommand[0] = "cmd";
             finalCommand[1] = "/c";
-            System.arraycopy(command, 0, finalCommand, 2, command.length);
+            System.arraycopy(mergedCommand, 0, finalCommand, 2, mergedCommand.length);
         }
         ProcessBuilder pb = new ProcessBuilder(finalCommand);
         pb.directory(workDir);
@@ -142,7 +129,7 @@ public class CommandRunner {
 
         cmd.add(config.getSourceFilename());
 
-        return run(cmd.toArray(new String[0]), sourceDir);
+        return run(cmd.toArray(new String[0]), "", sourceDir);
     }
 
     private int timeoutSeconds = 10;

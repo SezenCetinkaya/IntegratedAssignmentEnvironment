@@ -16,7 +16,7 @@ class CommandRunnerTest {
                 ? new String[]{"cmd", "/c", "echo", "hello"}
                 : new String[]{"echo", "hello"};
 
-        ProcessResult result = runner.run(cmd, new File("."));
+        ProcessResult result = runner.run(cmd, "", new File("."));
         assertEquals(0, result.getExitCode(), "Exit code should be 0");
         assertTrue(result.getStdout().trim().contains("hello"), "Stdout should contain hello");
         assertFalse(result.isTimedOut(), "Should not timeout");
@@ -27,7 +27,7 @@ class CommandRunnerTest {
         CommandRunner runner = new CommandRunner();
         String[] cmd = new String[]{"nonexistentcommand12345"};
 
-        ProcessResult result = runner.run(cmd, new File("."));
+        ProcessResult result = runner.run(cmd, "", new File("."));
         assertTrue(result.getExitCode() != 0 || !result.getStderr().isEmpty(),
                 "Exit code should be non-zero or stderr should not be empty");
     }
@@ -44,9 +44,24 @@ class CommandRunnerTest {
             cmd = new String[]{"sleep", "3"};
         }
 
-        ProcessResult result = runner.run(cmd, new File("."));
+        ProcessResult result = runner.run(cmd, "", new File("."));
         assertTrue(result.isTimedOut(), "Command should timeout");
         assertTrue(result.hasFailed(), "Timed out command should be considered failed");
+    }
+
+    @Test
+    void testRunWithArguments() {
+        CommandRunner runner = new CommandRunner();
+        String[] cmd = System.getProperty("os.name").toLowerCase().contains("win")
+                ? new String[]{"cmd", "/c", "echo"}
+                : new String[]{"echo"};
+        String runArguments = "alpha beta";
+
+        ProcessResult result = runner.run(cmd, runArguments, new File("."));
+        assertEquals(0, result.getExitCode(), "Exit code should be 0");
+        String stdout = result.getStdout();
+        assertTrue(stdout.contains("alpha"), "Stdout should contain alpha");
+        assertTrue(stdout.contains("beta"), "Stdout should contain beta");
     }
 
     @Test
