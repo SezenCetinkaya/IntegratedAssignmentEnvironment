@@ -31,27 +31,18 @@ public class SubmissionProcessor {
      * @param ignoreCase      Çıktı karşılaştırmasında büyük/küçük harf duyarsızlığı
      * @return                Her öğrenci için bir StudentResult listesi
      */
-    // ============================================================
-    // TODO [OWNER: Talat Karasakal (Execution)] [PHASE: 1] [REQ: 6, 8]
-    // GÖREV: processAll/processSingle imzasına runArguments ekle
-    // AÇIKLAMA:
-    //   GUI'deki runArgsField değeri MainController'da project'e kaydediliyor
-    //   ama processAll/processSingle'a parametre olarak geçilmiyor.
-    //   Öğrenci programı hiçbir zaman run argümanı almıyor.
-    // ADIMLAR:
-    //   1. processAll imzasını güncelle:
-    //      processAll(File submissionsDir, Configuration config,
-    //                 String expectedOutput, boolean ignoreCase, String runArguments)
-    //      (alternatif: project nesnesini parametre yap, getRunArguments() üzerinden oku)
-    //   2. processSingle'a da aynı şekilde runArguments ilet.
-    //   3. commandRunner.run(...) çağrısına runArguments'ı geç.
-    // KABUL KRİTERİ:
-    //   Argümanlar olmadan ve argümanlarla çalıştırma davranışı farklı olmalı.
-    // ============================================================
     public List<StudentResult> processAll(File submissionsDir,
                                           Configuration config,
                                           String expectedOutput,
                                           boolean ignoreCase) {
+        return processAll(submissionsDir, config, expectedOutput, ignoreCase, "");
+    }
+
+    public List<StudentResult> processAll(File submissionsDir,
+                                          Configuration config,
+                                          String expectedOutput,
+                                          boolean ignoreCase,
+                                          String runArguments) {
         List<StudentResult> results = new ArrayList<>();
 
         File[] zipFiles = findZipFiles(submissionsDir);
@@ -60,11 +51,18 @@ public class SubmissionProcessor {
         }
 
         for (File zipFile : zipFiles) {
-            StudentResult result = processSingle(zipFile, config, expectedOutput, ignoreCase);
+            StudentResult result = processSingle(zipFile, config, expectedOutput, ignoreCase, runArguments);
             results.add(result);
         }
 
         return results;
+    }
+
+    public StudentResult processSingle(File zipFile,
+                                       Configuration config,
+                                       String expectedOutput,
+                                       boolean ignoreCase) {
+        return processSingle(zipFile, config, expectedOutput, ignoreCase, "");
     }
 
     /**
@@ -76,12 +74,14 @@ public class SubmissionProcessor {
      * @param config         Proje yapılandırması
      * @param expectedOutput Beklenen program çıktısı
      * @param ignoreCase     Büyük/küçük harf duyarsız karşılaştırma
+     * @param runArguments   Programın çalıştırılırken alacağı argümanlar
      * @return               Öğrencinin değerlendirme sonucu
      */
     public StudentResult processSingle(File zipFile,
                                        Configuration config,
                                        String expectedOutput,
-                                       boolean ignoreCase) {
+                                       boolean ignoreCase,
+                                       String runArguments) {
         StudentResult result = new StudentResult();
 
         String studentId = extractStudentId(zipFile);
@@ -134,7 +134,7 @@ public class SubmissionProcessor {
                 // KABUL KRİTERİ:
                 //   Results tablosunda executionTimeMs kolonu her satır için pozitif ms değeri gösteriyor.
                 // ============================================================
-                ProcessResult runResult = commandRunner.run(runParts, executionDir);
+                ProcessResult runResult = commandRunner.run(runParts, runArguments, executionDir);
 
                 boolean passed = outputComparator.compare(
                         runResult.getStdout(),
