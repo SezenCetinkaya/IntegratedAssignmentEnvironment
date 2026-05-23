@@ -75,4 +75,28 @@ class CommandRunnerTest {
         assertEquals("", result.getStderr(), "Interpreted language compile should have empty stderr");
         assertTrue(result.isSuccessful(), "Interpreted language compile should be successful");
     }
+
+    @Test
+    void testCompileWithMissingCompilerReturnsNotFound() {
+        CommandRunner runner = new CommandRunner();
+        Configuration config = new Configuration();
+        config.setInterpreted(false);
+        config.setCompilerPath("definitely_nonexistent_compiler_xyz123");
+
+        ProcessResult result = runner.compile(config, new File("."));
+        assertEquals(-1, result.getExitCode());
+        assertTrue(result.getStderr().contains("COMPILER_NOT_FOUND"));
+    }
+
+    @Test
+    void testCompileWithInterpretedSkipsCheck() {
+        CommandRunner runner = new CommandRunner();
+        Configuration config = new Configuration();
+        config.setInterpreted(true);
+        config.setCompilerPath("definitely_nonexistent");
+
+        ProcessResult result = runner.compile(config, new File("."));
+        assertEquals(0, result.getExitCode());
+        assertTrue(result.isSuccessful());
+    }
 }

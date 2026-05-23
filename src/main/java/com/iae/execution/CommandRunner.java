@@ -84,39 +84,18 @@ public class CommandRunner {
         }
     }
 
-    // ============================================================
-    // TODO [OWNER: Talat Karasakal (Execution)] [PHASE: 3] [REQ: 7]
-    // GÖREV: Compile öncesi compiler path varlığını kontrol et
-    // AÇIKLAMA:
-    //   PDF: "what if they don't exist!" — gizli requirement.
-    //   Şu an geçersiz gcc path verilirse Process exception fırlatıyor,
-    //   açıklayıcı mesaj yok ve batch durabilir.
-    // ADIMLAR:
-    //   1. compile() en başına ekle:
-    //      String compilerPath = config.getCompilerPath();
-    //      if (compilerPath != null && !compilerPath.isBlank()) {
-    //          File compilerFile = new File(compilerPath);
-    //          if (!compilerFile.exists() && !isOnPath(compilerPath)) {
-    //              return new ProcessResult(-1, "", "COMPILER_NOT_FOUND: " + compilerPath, false);
-    //          }
-    //      }
-    //   2. isOnPath() helper yaz:
-    //      private boolean isOnPath(String name) {
-    //          String pathEnv = System.getenv("PATH");
-    //          if (pathEnv == null) return false;
-    //          for (String dir : pathEnv.split(File.pathSeparator)) {
-    //              if (new File(dir, name).exists()) return true;
-    //          }
-    //          return false;
-    //      }
-    //   3. GUI'de bu status'u da göster (Uğur'la koordine et).
-    // KABUL KRİTERİ:
-    //   Geçersiz gcc path → result tablosunda "COMPILER_NOT_FOUND", app crash olmuyor,
-    //   batch sonraki öğrenciye geçiyor.
-    // ============================================================
     public ProcessResult compile(Configuration config, File sourceDir) {
         if (config.isInterpreted()) {
             return new ProcessResult(0, "", "", false);
+        }
+
+        String compilerPath = config.getCompilerPath();
+        if (compilerPath != null && !compilerPath.isBlank()) {
+            File compilerFile = new File(compilerPath);
+            if (!compilerFile.exists() && !isOnPath(compilerPath)) {
+                return new ProcessResult(-1, "",
+                        "COMPILER_NOT_FOUND: " + compilerPath, false);
+            }
         }
 
         List<String> cmd = new ArrayList<>();
@@ -130,6 +109,21 @@ public class CommandRunner {
         cmd.add(config.getSourceFilename());
 
         return run(cmd.toArray(new String[0]), "", sourceDir);
+    }
+
+    private boolean isOnPath(String name) {
+        String pathEnv = System.getenv("PATH");
+        if (pathEnv == null || pathEnv.isBlank()) return false;
+        for (String dir : pathEnv.split(java.io.File.pathSeparator)) {
+            File candidate = new File(dir, name);
+            if (candidate.exists() && candidate.isFile()) return true;
+            // Windows için .exe uzantısı dene
+            if (System.getProperty("os.name", "").toLowerCase().contains("win")) {
+                File withExe = new File(dir, name + ".exe");
+                if (withExe.exists() && withExe.isFile()) return true;
+            }
+        }
+        return false;
     }
 
     private int timeoutSeconds = 10;

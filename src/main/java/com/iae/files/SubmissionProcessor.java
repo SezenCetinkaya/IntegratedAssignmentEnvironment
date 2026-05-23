@@ -122,19 +122,10 @@ public class SubmissionProcessor {
             // Prototype seviyesinde runCommand varsa çalıştır
             if (config.getRunCommand() != null && !config.getRunCommand().isBlank()) {
                 String[] runParts = normalizeRunCommand(config.getRunCommand()).split("\\s+");
-                // ============================================================
-                // TODO [OWNER: Talat Karasakal (Execution)] [PHASE: 3] [REQ: 4]
-                // GÖREV: executionTimeMs'i ölç ve result'a yaz
-                // AÇIKLAMA:
-                //   StudentResult'ta alan ve DB kolonu var, UI'da kolon var — ama ölçüm hiç yapılmıyor.
-                //   Her öğrenci için UI "0 ms" ya da boş gösteriyor, bu yanıltıcı.
-                // ADIMLAR:
-                //   1. commandRunner.run() çağrısından önce: long start = System.nanoTime();
-                //   2. Çağrıdan sonra: result.setExecutionTimeMs((int)((System.nanoTime()-start)/1_000_000));
-                // KABUL KRİTERİ:
-                //   Results tablosunda executionTimeMs kolonu her satır için pozitif ms değeri gösteriyor.
-                // ============================================================
+                long startNanos = System.nanoTime();
                 ProcessResult runResult = commandRunner.run(runParts, runArguments, executionDir);
+                long elapsedMs = (System.nanoTime() - startNanos) / 1_000_000L;
+                result.setExecutionTimeMs((int) Math.max(0L, elapsedMs));
 
                 boolean passed = outputComparator.compare(
                         runResult.getStdout(),
@@ -142,29 +133,16 @@ public class SubmissionProcessor {
                         ignoreCase
                 );
 
-                // ============================================================
-                // TODO [OWNER: Talat Karasakal (Execution)] [PHASE: 3] [REQ: 7, 8]
-                // GÖREV: Runtime error'ı PASS gibi gösterme bug'ını düzelt
-                // AÇIKLAMA:
-                //   Hoca raporu: "runtime error pass gibi görünüyo"
-                //   Şu an: passed=true ise, exitCode!=0 olsa bile PASS veriliyor (satır altında).
-                //   Process exit code != 0 ise çıktı karşılaştırması yapılmamalı.
-                // ADIMLAR:
-                //   1. isTimedOut kontrolünden SONRA, passed kontrolünden ÖNCE şunu ekle:
-                //      if (runResult.getExitCode() != 0 && !runResult.isTimedOut()) {
-                //          result.markRun("RUNTIME_ERROR");
-                //          result.appendError("Exit code: " + runResult.getExitCode()
-                //              + (runResult.getStderr().isBlank() ? "" : "\n" + runResult.getStderr()));
-                //          return result;
-                //      }
-                //   2. Bu sayede exitCode!=0 olan programlar PASS sayılmaz.
-                // KABUL KRİTERİ:
-                //   Segfault eden veya exception fırlatan öğrenci kodu RUNTIME_ERROR
-                //   olarak raporlanıyor, yanlışlıkla PASS sayılmıyor.
-                // ============================================================
                 if (runResult.isTimedOut()) {
                     result.markRun("RUNTIME_ERROR");
                     result.appendError(runResult.getCombinedOutput());
+                } else if (runResult.getExitCode() != 0 && !runResult.isTimedOut()) {
+                    result.markRun("RUNTIME_ERROR");
+                    String stderrPart = runResult.getStderr().isBlank()
+                            ? ""
+                            : "\n" + runResult.getStderr();
+                    result.appendError("Exit code: " + runResult.getExitCode() + stderrPart);
+                    return result;
                 } else if (passed) {
                     result.markRun("PASS");
                     if (runResult.hasFailed()) {
