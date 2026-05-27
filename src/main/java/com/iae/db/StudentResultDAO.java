@@ -40,21 +40,10 @@ public class StudentResultDAO {
                 res.setRunStatus(rs.getString("runStatus"));
                 res.setCompileErrorLog(rs.getString("compileErrorLog"));
                 res.setEvaluatedAt(rs.getString("evaluatedAt"));
-                // ============================================================
-                // TODO [OWNER: Sıla Karabağ (DB)] [PHASE: 3] [REQ: 4]
-                // GÖREV: executionTimeMs için null-safe okuma kullan
-                // AÇIKLAMA:
-                //   rs.getInt() SQL NULL'u 0 olarak döndürür. Hiç çalıştırılmamış (NOT_RUN)
-                //   öğrenciler için "0 ms" gösterilir — yanıltıcı.
-                // ADIMLAR:
-                //   1. Şu satırı: res.setExecutionTimeMs(rs.getInt("executionTimeMs"));
-                //      Şununla değiştir: int ms = rs.getInt("executionTimeMs");
-                //                        res.setExecutionTimeMs(rs.wasNull() ? null : ms);
-                //   2. Veya: res.setExecutionTimeMs(rs.getObject("executionTimeMs", Integer.class));
-                // KABUL KRİTERİ:
-                //   NOT_RUN öğrenciler için executionTimeMs null kalıyor, UI boş hücre gösteriyor.
-                // ============================================================
-                res.setExecutionTimeMs(rs.getInt("executionTimeMs"));
+
+                int ms = rs.getInt("executionTimeMs");
+                res.setExecutionTimeMs(rs.wasNull() ? null : ms);
+
                 results.add(res);
             }
         } catch (SQLException e) {
