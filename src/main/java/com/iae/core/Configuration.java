@@ -58,22 +58,7 @@ public class Configuration {
         return "Unnamed configuration";
     }
 
-    // ============================================================
-    // TODO [OWNER: Gözde Yılıkyılmaz (Core/Configuration model)] [PHASE: 1] [REQ: 4, 5]
-    // GÖREV: Eksik alanları .properties dosyasına ekle (export/import)
-    // AÇIKLAMA:
-    //   exportToFile() içinde compileArgs ve isInterpreted property'leri yazılmıyor.
-    //   Bu yüzden başka bir makineye configuration taşındığında bu bilgiler kayboluyor.
-    // ADIMLAR:
-    //   1. exportToFile() içine ekle:
-    //      props.setProperty("compileArgs", compileArgs == null ? "" : compileArgs);
-    //      props.setProperty("isInterpreted", String.valueOf(isInterpreted));
-    //   2. importFromFile() içine ekle:
-    //      config.setCompileArgs(props.getProperty("compileArgs", ""));
-    //      config.setInterpreted(Boolean.parseBoolean(props.getProperty("isInterpreted", "false")));
-    //   3. Round-trip unit test yaz: export edilen dosyayı import edip alanların eşit olduğunu doğrula.
-    // KABUL KRİTERİ: Configuration export → import → kaynak configuration objesi ile equals() = true
-    // ============================================================
+
     public void exportToFile(String path) {
         Properties props = new Properties();
 
@@ -94,18 +79,7 @@ public class Configuration {
         }
     }
 
-    // ============================================================
-    // TODO [OWNER: Gözde Yılıkyılmaz (Core/Configuration model)] [PHASE: 1] [REQ: 4, 5]
-    // GÖREV: importFromFile() içine compileArgs ve isInterpreted alanlarını ekle
-    // AÇIKLAMA:
-    //   exportToFile() ile birlikte bu metodun da güncellenmesi gerekiyor.
-    //   Şu an compileArgs ve isInterpreted okunmuyor — import sonrası bu alanlar boş kalıyor.
-    // ADIMLAR:
-    //   1. config.setCompileArgs(props.getProperty("compileArgs", ""));
-    //   2. config.setInterpreted(Boolean.parseBoolean(props.getProperty("isInterpreted", "false")));
-    //   3. Yukarıdaki TODO'daki round-trip testi bu metod için de çalıştır.
-    // KABUL KRİTERİ: Import edilen config'de compileArgs ve isInterpreted doğru değerlere sahip.
-    // ============================================================
+
     public static Configuration importFromFile(String path) {
         Properties props = new Properties();
 

@@ -53,19 +53,7 @@ public class Project {
         }
     }
 
-    // ============================================================
-    // TODO [OWNER: Gözde Yılıkyılmaz (Core)] [PHASE: 2] [REQ: 10]
-    // GÖREV: Project.toString() override et
-    // AÇIKLAMA:
-    //   MainController'daki ChoiceDialog<Project> şu an com.iae.core.Project@7a3b... gibi
-    //   okunaksız class referansı gösteriyor. Open Project dialog'u kullanılamaz hâle geliyor.
-    // ADIMLAR:
-    //   1. toString() metodunu override et: return name + " — " + createdAt;
-    //   2. Veya MainController'daki ChoiceDialog'a StringConverter ver (ConfigurationDAO'daki
-    //      configurationLabelConverter pattern'ine bak).
-    // KABUL KRİTERİ:
-    //   Open Project dialog'u proje adını ve tarihini insan-okunur biçimde gösteriyor.
-    // ============================================================
+
     public void addResult(StudentResult result) {
         if (result != null) {
             results.add(result);
