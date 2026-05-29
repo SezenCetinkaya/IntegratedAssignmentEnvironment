@@ -15,6 +15,9 @@
                     <MenuItem text="New Project…" onAction="#onNewProject" accelerator="Ctrl+N"/>
                     <MenuItem text="Open Project…" onAction="#onOpenProject" accelerator="Ctrl+O"/>
                     <MenuItem text="Save Project" onAction="#onSaveProject" accelerator="Ctrl+S"/>
+
+                    <MenuItem text="Export Results..." onAction="#onExportResults"/>
+
                     <SeparatorMenuItem/>
                     <MenuItem text="Exit" onAction="#onExit"/>
                 </Menu>

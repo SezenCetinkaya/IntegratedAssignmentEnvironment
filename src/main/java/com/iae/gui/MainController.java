@@ -72,6 +72,13 @@ public class MainController {
         updateProjectUI();
     }
 
+    @FXML
+    public void onExportResults() {
+        if (resultsPanelController != null) {
+            resultsPanelController.exportReport();
+        }
+    }
+
     private void setupVisualEffects() {
         UiAnimations.applyCardShadow(projectCard);
         UiAnimations.applyCardShadow(resultsCard);

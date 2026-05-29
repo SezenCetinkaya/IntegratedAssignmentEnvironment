@@ -14,6 +14,9 @@ import javafx.scene.control.TableRow;
 import javafx.scene.control.TableView;
 import javafx.scene.control.TextArea;
 import javafx.util.Duration;
+import javafx.stage.FileChooser;
+import java.io.File;
+import java.io.PrintWriter;
 
 import java.util.List;
 
@@ -165,8 +168,51 @@ public class ResultsController {
     // KABUL KRİTERİ:
     //   Excel'de açıldığında satırlar bozulmadan görünüyor, virgül/quote escape doğru.
     // ============================================================
+    @FXML
     public void exportReport() {
-        // Yukarıdaki TODO'yu uygula
+
+
+        FileChooser fc = new FileChooser();
+
+        fc.getExtensionFilters().add(
+                new FileChooser.ExtensionFilter("CSV Files", "*.csv")
+        );
+
+        File file = fc.showSaveDialog(resultsTable.getScene().getWindow());
+
+        if (file == null) {
+            return;
+        }
+
+        try (PrintWriter pw = new PrintWriter(file)) {
+
+            pw.println("studentId,compileStatus,runStatus,executionTimeMs,error");
+
+            for (StudentResult r : tableData) {
+
+                String error = r.getCompileErrorLog() == null
+                        ? ""
+                        : r.getCompileErrorLog().replace("\"", "\"\"");
+
+                int time = r.getExecutionTimeMs() == null
+                        ? 0
+                        : r.getExecutionTimeMs();
+
+                pw.printf(
+                        "%s,%s,%s,%d,\"%s\"%n",
+                        r.getStudentId(),
+                        r.getCompileStatus(),
+                        r.getRunStatus(),
+                        time,
+                        error
+                );
+            }
+
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+
+
     }
 
     @FXML
