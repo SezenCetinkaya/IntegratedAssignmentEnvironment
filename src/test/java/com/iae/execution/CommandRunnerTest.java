@@ -50,6 +50,26 @@ class CommandRunnerTest {
     }
 
     @Test
+    void testTimeoutDuration() {
+        CommandRunner runner = new CommandRunner();
+        runner.setTimeoutSeconds(2);
+
+        String[] cmd;
+        if (System.getProperty("os.name").toLowerCase().contains("win")) {
+            cmd = new String[]{"cmd", "/c", "pause"};
+        } else {
+            cmd = new String[]{"sleep", "10"};
+        }
+
+        long start = System.currentTimeMillis();
+        ProcessResult result = runner.run(cmd, "", new File("."));
+        long duration = System.currentTimeMillis() - start;
+
+        assertTrue(result.isTimedOut(), "Command should timeout");
+        assertTrue(duration < 4000, "Timeout should happen quickly (duration: " + duration + " ms)");
+    }
+
+    @Test
     void testRunWithArguments() {
         CommandRunner runner = new CommandRunner();
         String[] cmd = System.getProperty("os.name").toLowerCase().contains("win")

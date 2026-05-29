@@ -62,12 +62,14 @@ public class CommandRunner {
 
             boolean finished = process.waitFor(timeoutSeconds, TimeUnit.SECONDS);
 
-            
+            if (!finished) {
+                process.destroyForcibly();
+            }
+
             outThread.join(2000);
             errThread.join(2000);
 
             if (!finished) {
-                process.destroyForcibly();
                 return new ProcessResult(-1, stdout.toString(), stderr.toString(), true);
             }
 
