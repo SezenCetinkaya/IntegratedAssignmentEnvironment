@@ -8,6 +8,7 @@ import com.iae.db.ProjectDAO;
 import com.iae.db.StudentResultDAO;
 import com.iae.files.ResourceExtractor;
 import com.iae.files.SubmissionProcessor;
+import com.iae.service.ProjectFileService;
 import javafx.application.Platform;
 import javafx.concurrent.Task;
 import javafx.fxml.FXML;
@@ -61,6 +62,7 @@ public class MainController {
     private final ProjectDAO projectDAO = new ProjectDAO();
     private final ConfigurationDAO configDAO = new ConfigurationDAO();
     private final StudentResultDAO resultDAO = new StudentResultDAO();
+    private final ProjectFileService projectFileService = new ProjectFileService();
 
     public void setPrimaryStage(Stage stage) {
         this.primaryStage = stage;
@@ -318,21 +320,43 @@ public class MainController {
     }
 
     @FXML
-    // ============================================================
-    // TODO [OWNER: Sezen Çetinkaya (Files) + Uğur Emin Baynal (GUI)] [PHASE: 2] [REQ: 10]
-    // GÖREV: onSaveProject() ve onOpenProject()'i ProjectFileService ile bağla
-    // AÇIKLAMA:
-    //   Şu an "Save" sadece DB'ye yazıyor, taşınabilir .iaeproject dosyası üretmiyor.
-    //   ProjectFileService.java stub'ı oluşturuldu (com.iae.service paketi).
-    // ADIMLAR:
-    //   1. ProjectFileService implement edildikten sonra buraya FileChooser ekle.
-    //   2. onSaveProject(): FileChooser ile hedef .iaeproject yolu seç → service.saveProject() çağır.
-    //   3. onOpenProject(): FileChooser ile .iaeproject seç → service.openProject() çağır,
-    //      dönen Project'i currentProject'e ata, UI'ı güncelle.
-    // KABUL KRİTERİ:
-    //   "Export Project" butonu .iaeproject dosyası üretiyor.
-    //   "Import Project" butonu .iaeproject dosyasından projeyi geri yüklüyor.
-    // ============================================================
+    public void onExportProject() {
+        if (currentProject == null) {
+            showWarning("No project", "Open or create a project first.");
+            return;
+        }
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Export Project");
+        fc.setInitialFileName(currentProject.getName() + ".iaeproject");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("IAE Project", "*.iaeproject"));
+        File target = fc.showSaveDialog(primaryStage);
+        if (target == null) return;
+        try {
+            List<StudentResult> results = resultDAO.findByProject(currentProject.getProjectId());
+            projectFileService.saveProject(currentProject, currentConfiguration, results, target);
+            setStatus("Project exported: " + target.getName(), "status-label-success");
+        } catch (IOException e) {
+            showError("Export failed", e.getMessage());
+        }
+    }
+
+    @FXML
+    public void onImportProject() {
+        FileChooser fc = new FileChooser();
+        fc.setTitle("Import Project");
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("IAE Project", "*.iaeproject"));
+        File source = fc.showOpenDialog(primaryStage);
+        if (source == null) return;
+        try {
+            Project imported = projectFileService.openProject(source);
+            setCurrentProject(imported);
+            setStatus("Project imported: " + imported.getName(), "status-label-success");
+        } catch (IOException e) {
+            showError("Import failed", e.getMessage());
+        }
+    }
+
+    @FXML
     public void onSaveProject() {
         if (currentProject == null) {
             showWarning("No project", "Open or create a project first.");
@@ -501,7 +525,7 @@ public class MainController {
         alert.setHeaderText("Integrated Assignment Environment");
         alert.setContentText("CE316 Project — Izmir University of Economics\n"
                 + "Automates batch evaluation of student programming submissions.\n\n"
-                + "Version 1.0.0");
+                + "Version 2.0.0");
         alert.showAndWait();
     }
 

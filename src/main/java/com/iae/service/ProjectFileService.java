@@ -48,8 +48,11 @@ public class ProjectFileService {
             ProjectBundle bundle = gson.fromJson(reader, ProjectBundle.class);
 
             if (bundle.configuration != null) {
-                int newConfigId = configurationDAO.insert(bundle.configuration);
-                bundle.project.setConfigId(newConfigId);
+                Configuration existing = configurationDAO.findByName(bundle.configuration.getName());
+                int configId = (existing != null)
+                        ? existing.getConfigId()
+                        : configurationDAO.insert(bundle.configuration);
+                bundle.project.setConfigId(configId);
             }
 
             bundle.project.setProjectId(0);

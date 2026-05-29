@@ -4,61 +4,323 @@
     <meta charset="UTF-8"/>
     <title>IAE User Manual</title>
     <style>
-        body { font-family: Segoe UI, Arial, sans-serif; margin: 2rem; line-height: 1.6; color: #1a1a1a; }
-        h1 { color: #1e3a5f; }
-        h2 { color: #1e6fd9; margin-top: 2rem; }
-        code { background: #eef2f7; padding: 2px 6px; border-radius: 4px; }
+        body { font-family: Segoe UI, Arial, sans-serif; margin: 2rem; line-height: 1.6; color: #1a1a1a; max-width: 860px; }
+        h1 { color: #1e3a5f; border-bottom: 2px solid #1e3a5f; padding-bottom: 0.4rem; }
+        h2 { color: #1e6fd9; margin-top: 2.5rem; border-left: 4px solid #1e6fd9; padding-left: 0.6rem; }
+        h3 { color: #333; margin-top: 1.4rem; }
+        code { background: #eef2f7; padding: 2px 6px; border-radius: 4px; font-size: 0.92em; }
+        pre { background: #eef2f7; padding: 1rem; border-radius: 6px; overflow-x: auto; font-size: 0.9em; }
+        table { border-collapse: collapse; width: 100%; margin: 1rem 0; }
+        th { background: #1e3a5f; color: white; padding: 8px 12px; text-align: left; }
+        td { padding: 7px 12px; border-bottom: 1px solid #dde3ee; }
+        tr:nth-child(even) td { background: #f4f7fb; }
+        .note { background: #fff8e1; border-left: 4px solid #f9a825; padding: 0.7rem 1rem; border-radius: 4px; margin: 1rem 0; }
+        .warning { background: #fdecea; border-left: 4px solid #e53935; padding: 0.7rem 1rem; border-radius: 4px; margin: 1rem 0; }
+        .tip { background: #e8f5e9; border-left: 4px solid #43a047; padding: 0.7rem 1rem; border-radius: 4px; margin: 1rem 0; }
+        ol li, ul li { margin-bottom: 0.3rem; }
+        nav { background: #f4f7fb; border: 1px solid #dde3ee; border-radius: 6px; padding: 1rem 1.5rem; margin-bottom: 2rem; display: inline-block; min-width: 280px; }
+        nav a { color: #1e6fd9; text-decoration: none; display: block; line-height: 1.9; }
+        nav a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-<h1>Integrated Assignment Environment (IAE)</h1>
-<p>User manual — CE316 project. Offline desktop tool for batch-evaluating student programming submissions.</p>
 
-<!--
-============================================================
-TODO [OWNER: Uğur Emin Baynal (GUI) + Sezen Çetinkaya (Files)] [PHASE: 5] [REQ: 2]
-GÖREV: Manuel içeriğini gerçek kullanım kılavuzu seviyesine getir
-AÇIKLAMA:
-  Mevcut manual yalnızca genel bir özet. Hoca yalnızca manual'ı okuyarak
-  uygulamayı kullanabilmeli (Gereksinim R2).
-EKLENECEK BÖLÜMLER (en az):
-  1. Giriş — IAE nedir, ne işe yarar
-  2. Configuration oluşturma (C, Java, Python örnek adım adım)
-  3. Yeni proje oluşturma (wizard adım adım ekran görüntüsü ile)
-  4. ZIP submission directory hazırlama (klasör yapısı, dosya isimlendirme)
-  5. Expected output dosyası formatı (satır sonu, encoding uyarıları)
-  6. Run arguments girme (ne zaman kullanılır, örnek)
-  7. Sonuçları görüntüleme ve CSV olarak dışa aktarma
-  8. Configuration import/export (başka makineye taşıma)
-  9. Interpreted vs compiled language farkları (Python vs C örneği)
-  10. Sorun giderme: compiler not found, runtime error, source not found hataları
-KABUL KRİTERİ:
-  Hoca yalnızca manual'ı okuyarak uygulamayı sıfırdan kullanabilmeli.
-============================================================
--->
+<h1>Integrated Assignment Environment (IAE) — User Manual</h1>
+<p>CE316 Project &mdash; Izmir University of Economics. IAE is an offline desktop tool for batch-evaluating student programming submissions. It unzips student archives, compiles or interprets their code, compares output to an expected result, and presents a results table that can be exported as CSV.</p>
 
-<h2>1. Getting started</h2>
-<p>Install IAE from the Windows installer, then launch it from the desktop shortcut. Java 21 must be installed on the target machine.</p>
+<nav>
+    <strong>Contents</strong>
+    <a href="#sec1">1. Introduction</a>
+    <a href="#sec2">2. Creating a Language Configuration</a>
+    <a href="#sec3">3. Creating a New Project</a>
+    <a href="#sec4">4. Preparing the ZIP Submission Directory</a>
+    <a href="#sec5">5. Expected Output File Format</a>
+    <a href="#sec6">6. Run Arguments</a>
+    <a href="#sec7">7. Viewing Results and Exporting CSV</a>
+    <a href="#sec8">8. Importing and Exporting Configurations</a>
+    <a href="#sec9">9. Compiled vs Interpreted Languages</a>
+    <a href="#sec10">10. Troubleshooting</a>
+</nav>
 
-<h2>2. Language configurations</h2>
-<p>Open <strong>Configuration → Manage Configurations</strong> to create profiles for C, Java, Python, etc. Each profile defines:</p>
+<!-- ============================================================ -->
+<h2 id="sec1">1. Introduction</h2>
+<p>IAE automates the repetitive work of grading programming assignments:</p>
+<ol>
+    <li>Each student submits a ZIP file containing their source code.</li>
+    <li>IAE extracts every ZIP into a temporary workspace.</li>
+    <li>For compiled languages (C, Java) IAE compiles the source. For interpreted languages (Python) it skips this step.</li>
+    <li>IAE runs the program and captures its standard output.</li>
+    <li>The output is compared line-by-line against an <em>expected output</em> file you provide.</li>
+    <li>Results (PASS / FAIL / compile error / runtime error) are shown in a table and can be saved to the database or exported as CSV.</li>
+</ol>
+<p>A <strong>Configuration</strong> holds the language-specific settings (compiler path, run command, timeout). A <strong>Project</strong> links one configuration to a submission folder and an expected output file. You can have many projects (one per assignment) each reusing the same configuration.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec2">2. Creating a Language Configuration</h2>
+<p>Go to <strong>Configuration &rarr; Manage Configurations</strong>. Click <strong>New</strong> to open the configuration form.</p>
+
+<table>
+    <tr><th>Field</th><th>Description</th><th>Example</th></tr>
+    <tr><td>Name</td><td>A human-readable label for this configuration</td><td><code>C GCC</code></td></tr>
+    <tr><td>Language</td><td>Language name (informational)</td><td><code>C</code></td></tr>
+    <tr><td>Interpreted</td><td>Check this for Python/JavaScript; leave unchecked for C/Java</td><td>unchecked for C</td></tr>
+    <tr><td>Compiler Path</td><td>Full path to the compiler executable, or just the command name if it is on PATH</td><td><code>gcc</code> or <code>C:\MinGW\bin\gcc.exe</code></td></tr>
+    <tr><td>Compile Arguments</td><td>Flags passed to the compiler (before the source filename)</td><td><code>-o main</code></td></tr>
+    <tr><td>Source Filename</td><td>Exact filename IAE looks for inside the extracted ZIP</td><td><code>main.c</code></td></tr>
+    <tr><td>Run Command</td><td>Command to execute the compiled program or interpreter</td><td><code>main.exe</code> (C) / <code>java Main</code> (Java) / <code>python main.py</code> (Python)</td></tr>
+    <tr><td>Timeout (seconds)</td><td>Maximum time a student's program may run before it is killed</td><td><code>10</code></td></tr>
+</table>
+
+<h3>Example: C with GCC</h3>
+<ol>
+    <li>Name: <code>C GCC</code></li>
+    <li>Language: <code>C</code></li>
+    <li>Interpreted: <em>unchecked</em></li>
+    <li>Compiler Path: <code>gcc</code> (assumes GCC is on PATH, e.g. via MinGW)</li>
+    <li>Compile Arguments: <code>-o main</code></li>
+    <li>Source Filename: <code>main.c</code></li>
+    <li>Run Command: <code>main.exe</code></li>
+    <li>Timeout: <code>10</code></li>
+</ol>
+
+<h3>Example: Java with javac</h3>
+<ol>
+    <li>Name: <code>Java JDK 21</code></li>
+    <li>Language: <code>Java</code></li>
+    <li>Interpreted: <em>unchecked</em></li>
+    <li>Compiler Path: <code>javac</code></li>
+    <li>Compile Arguments: <em>(leave blank)</em></li>
+    <li>Source Filename: <code>Main.java</code></li>
+    <li>Run Command: <code>java Main</code></li>
+    <li>Timeout: <code>15</code></li>
+</ol>
+
+<h3>Example: Python</h3>
+<ol>
+    <li>Name: <code>Python 3</code></li>
+    <li>Language: <code>Python</code></li>
+    <li>Interpreted: <em>checked</em></li>
+    <li>Compiler Path: <em>(leave blank — not used for interpreted languages)</em></li>
+    <li>Compile Arguments: <em>(leave blank)</em></li>
+    <li>Source Filename: <code>main.py</code></li>
+    <li>Run Command: <code>python main.py</code></li>
+    <li>Timeout: <code>10</code></li>
+</ol>
+
+<p>Click <strong>Save</strong> when done. The configuration is stored in the local SQLite database.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec3">3. Creating a New Project</h2>
+<p>Each assignment you want to grade is a <em>Project</em>. Go to <strong>File &rarr; New Project</strong>.</p>
+<ol>
+    <li><strong>Project Name</strong> — give it a descriptive name, e.g. <code>HW1 - Sorting Algorithms</code>.</li>
+    <li><strong>Configuration</strong> — select the language configuration you created in Section 2 from the drop-down.</li>
+    <li><strong>Submission Directory</strong> — click <strong>Browse</strong> and select the folder that contains all student ZIP files.</li>
+    <li><strong>Expected Output File</strong> — click <strong>Browse</strong> and select the <code>.txt</code> file that contains the correct program output (see Section 5).</li>
+    <li><strong>Run Arguments</strong> — optional; see Section 6.</li>
+    <li>Click <strong>Save Project</strong>.</li>
+</ol>
+<p>Once saved, click <strong>Run Evaluation</strong> to start grading. IAE processes all ZIPs in the submission directory. A progress indicator appears while running. If a student's submission fails, IAE continues with the next one &mdash; one broken ZIP does not stop the batch.</p>
+
+<!-- ============================================================ -->
+<h2 id="sec4">4. Preparing the ZIP Submission Directory</h2>
+<p>All student ZIP files must be placed in a single flat folder. IAE uses the ZIP filename (without extension) as the student identifier.</p>
+
+<h3>Required folder structure</h3>
+<pre>submissions/
+    20210001.zip
+    20210002.zip
+    20210003.zip
+    ...</pre>
+
+<h3>Required ZIP contents</h3>
+<p>Each ZIP must contain the source file at its root or in a single subdirectory. IAE searches for the filename defined in the configuration's <em>Source Filename</em> field (case-insensitive).</p>
+<pre>20210001.zip
+    main.c          &larr; IAE finds this (Source Filename = "main.c")</pre>
+<p>or</p>
+<pre>20210001.zip
+    20210001/
+        main.c      &larr; also accepted (one level of subdirectory)</pre>
+
+<div class="warning">
+    <strong>Do not nest ZIPs inside ZIPs.</strong> IAE only extracts one level.
+</div>
+<div class="note">
+    <strong>Student ID as filename:</strong> Name each ZIP after the student's ID (e.g. <code>20210001.zip</code>). This ID appears in the results table and CSV export.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec5">5. Expected Output File Format</h2>
+<p>Create a plain text file containing exactly what the correct program should print to standard output. IAE compares each student's output to this file line by line.</p>
+
+<h3>Rules</h3>
 <ul>
-    <li>Compiler or interpreter path</li>
-    <li>Compile arguments and expected source filename</li>
-    <li>Run command and timeout</li>
+    <li>Save the file as UTF-8.</li>
+    <li>Line endings: IAE normalises both <code>CRLF</code> (Windows) and <code>LF</code> (Unix) automatically, so either is acceptable.</li>
+    <li>Trailing blank lines at the end of the file are ignored during comparison.</li>
+    <li>Leading and trailing whitespace on each line is <em>not</em> stripped &mdash; match the exact spacing your program produces.</li>
 </ul>
-<p>Use <strong>Import</strong> / <strong>Export</strong> to share configurations between machines.</p>
 
-<h2>3. Projects</h2>
-<p><strong>File → New Project</strong> links a configuration, submission ZIP folder, expected output file, and optional run arguments. Save the project to persist settings and results.</p>
+<h3>Example</h3>
+<p>If the assignment asks the program to print the numbers 1 to 5, your expected output file should contain:</p>
+<pre>1
+2
+3
+4
+5</pre>
 
-<h2>4. Running evaluation</h2>
-<p>Place student ZIP files in one folder (each archive should extract to a folder named with the student ID). Click <strong>Run Evaluation</strong>. IAE will unzip, compile, run, and compare outputs for every ZIP. Errors for one student do not stop processing for others.</p>
+<div class="tip">
+    <strong>Tip:</strong> Run your reference solution once, redirect its output to a file (<code>program.exe &gt; expected.txt</code>), and use that file directly in IAE.
+</div>
 
-<h2>5. Results</h2>
-<p>The results table shows compile status, pass/fail, and timing per student. Select a row to view error logs in the panel below.</p>
+<!-- ============================================================ -->
+<h2 id="sec6">6. Run Arguments</h2>
+<p>Some programs require command-line arguments when they run (e.g. an input filename or a numeric parameter). Enter these in the <strong>Run Arguments</strong> field of the project.</p>
 
-<h2>6. Support</h2>
-<p>CE316 — Izmir University of Economics, Faculty of Engineering.</p>
+<h3>When to use</h3>
+<ul>
+    <li>The assignment specification says students should accept a filename as <code>argv[1]</code>.</li>
+    <li>The program reads a seed or configuration value from the command line.</li>
+</ul>
+
+<h3>Format</h3>
+<p>Enter arguments exactly as you would type them after the program name in a terminal. Multiple arguments are separated by spaces.</p>
+<table>
+    <tr><th>Scenario</th><th>Run Arguments field</th><th>Effective command</th></tr>
+    <tr><td>No arguments</td><td><em>(empty)</em></td><td><code>main.exe</code></td></tr>
+    <tr><td>Input file</td><td><code>input.txt</code></td><td><code>main.exe input.txt</code></td></tr>
+    <tr><td>Two arguments</td><td><code>10 ascending</code></td><td><code>main.exe 10 ascending</code></td></tr>
+</table>
+<div class="note">
+    The same run arguments are passed to <em>every</em> student's program. If the argument is a filename, that file must be present inside every student's ZIP.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec7">7. Viewing Results and Exporting CSV</h2>
+<h3>Results table</h3>
+<p>After <strong>Run Evaluation</strong> completes, the Results tab shows one row per student:</p>
+<table>
+    <tr><th>Column</th><th>Meaning</th></tr>
+    <tr><td>Student ID</td><td>ZIP filename without extension</td></tr>
+    <tr><td>Compile Status</td><td><code>OK</code>, <code>FAILED</code>, or <code>SKIPPED</code> (interpreted languages)</td></tr>
+    <tr><td>Run Status</td><td><code>PASS</code>, <code>FAIL</code>, <code>ERROR</code>, or <code>TIMEOUT</code></td></tr>
+    <tr><td>Execution Time (ms)</td><td>How long the program ran</td></tr>
+</table>
+<p>Click any row to see the full compile error log or runtime error details in the panel below the table.</p>
+
+<h3>Exporting to CSV</h3>
+<ol>
+    <li>Go to <strong>File &rarr; Export Results...</strong> (or use the Export button in the Results tab).</li>
+    <li>A Save dialog appears. Choose a location and filename, then click <strong>Save</strong>.</li>
+    <li>The CSV file can be opened directly in Excel or any spreadsheet application.</li>
+</ol>
+<p>CSV column order: <code>studentId, compileStatus, runStatus, executionTimeMs, error</code></p>
+<div class="tip">
+    <strong>Tip:</strong> Open the CSV in Excel, select the <em>executionTimeMs</em> column, and sort descending to quickly spot unusually slow or infinite-loop submissions.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec8">8. Importing and Exporting Configurations</h2>
+<p>You can share a configuration between machines (e.g. your office PC and a grading laptop) using the export/import feature.</p>
+
+<h3>Exporting</h3>
+<ol>
+    <li>Open <strong>Configuration &rarr; Manage Configurations</strong>.</li>
+    <li>Select the configuration you want to share.</li>
+    <li>Click <strong>Export</strong> and choose a save location. IAE saves a <code>.properties</code> file.</li>
+</ol>
+
+<h3>Importing</h3>
+<ol>
+    <li>Open <strong>Configuration &rarr; Manage Configurations</strong> on the target machine.</li>
+    <li>Click <strong>Import</strong> and select the <code>.properties</code> file.</li>
+    <li>IAE loads all fields from the file and saves it to the local database.</li>
+</ol>
+<div class="note">
+    The <em>Compiler Path</em> is stored verbatim. If the compiler is installed at a different path on the target machine, edit the configuration after importing.
+</div>
+
+<!-- ============================================================ -->
+<h2 id="sec9">9. Compiled vs Interpreted Languages</h2>
+<p>IAE handles the two language categories differently:</p>
+
+<table>
+    <tr><th></th><th>Compiled (C, Java)</th><th>Interpreted (Python)</th></tr>
+    <tr><td><strong>Interpreted checkbox</strong></td><td>Unchecked</td><td>Checked</td></tr>
+    <tr><td><strong>Compile step</strong></td><td>Runs <em>Compiler Path</em> + <em>Compile Arguments</em> + <em>Source Filename</em></td><td>Skipped entirely</td></tr>
+    <tr><td><strong>Run step</strong></td><td>Runs <em>Run Command</em> (e.g. <code>main.exe</code> or <code>java Main</code>)</td><td>Runs <em>Run Command</em> (e.g. <code>python main.py</code>)</td></tr>
+    <tr><td><strong>Compile Status in results</strong></td><td><code>OK</code> or <code>FAILED</code></td><td><code>SKIPPED</code></td></tr>
+</table>
+
+<h3>C example walkthrough</h3>
+<ol>
+    <li>IAE extracts <code>20210001.zip</code> to a temporary folder.</li>
+    <li>It finds <code>main.c</code> in that folder.</li>
+    <li>Runs: <code>gcc -o main main.c</code></li>
+    <li>If compilation succeeds, runs: <code>main.exe</code> (with optional run arguments).</li>
+    <li>Captures stdout, compares to expected output.</li>
+</ol>
+
+<h3>Python example walkthrough</h3>
+<ol>
+    <li>IAE extracts <code>20210001.zip</code> to a temporary folder.</li>
+    <li>It finds <code>main.py</code> in that folder.</li>
+    <li>Compile step: <em>skipped</em>.</li>
+    <li>Runs: <code>python main.py</code> (with optional run arguments).</li>
+    <li>Captures stdout, compares to expected output.</li>
+</ol>
+
+<!-- ============================================================ -->
+<h2 id="sec10">10. Troubleshooting</h2>
+
+<h3>COMPILER_NOT_FOUND</h3>
+<p><strong>Symptom:</strong> Compile Status shows <code>FAILED</code>; error log says <code>COMPILER_NOT_FOUND: gcc</code>.</p>
+<p><strong>Cause:</strong> The compiler executable is not found at the path specified in the configuration and is not on the system PATH.</p>
+<p><strong>Fix:</strong></p>
+<ul>
+    <li>Install the compiler (e.g. MinGW for GCC on Windows, JDK for javac).</li>
+    <li>Either add the compiler's <code>bin/</code> folder to the system PATH, or enter the full path in the <em>Compiler Path</em> field (e.g. <code>C:\MinGW\bin\gcc.exe</code>).</li>
+</ul>
+
+<h3>Source Not Found</h3>
+<p><strong>Symptom:</strong> Run Status shows <code>ERROR</code>; error log says the source file could not be located.</p>
+<p><strong>Cause:</strong> The student's ZIP does not contain a file matching the <em>Source Filename</em> in the configuration (search is case-insensitive but the name must match).</p>
+<p><strong>Fix:</strong></p>
+<ul>
+    <li>Check that the <em>Source Filename</em> in the configuration matches what students were asked to submit (e.g. <code>Main.java</code> vs <code>main.java</code>).</li>
+    <li>Open a few student ZIPs manually to verify the filename they used.</li>
+</ul>
+
+<h3>Runtime Error / Non-zero Exit Code</h3>
+<p><strong>Symptom:</strong> Run Status shows <code>ERROR</code> after compilation succeeded.</p>
+<p><strong>Cause:</strong> The student's program crashed or exited with a non-zero code (e.g. segfault, uncaught exception, missing input file).</p>
+<p><strong>Fix:</strong></p>
+<ul>
+    <li>Click the student's row in the results table to see the stderr output for clues.</li>
+    <li>If the program requires an input file via run arguments, verify that file exists inside the student's ZIP.</li>
+</ul>
+
+<h3>TIMEOUT</h3>
+<p><strong>Symptom:</strong> Run Status shows <code>TIMEOUT</code>.</p>
+<p><strong>Cause:</strong> The student's program ran longer than the <em>Timeout</em> value set in the configuration. IAE kills the process automatically.</p>
+<p><strong>Fix:</strong></p>
+<ul>
+    <li>If the timeout is too short for a legitimate program, increase <em>Timeout (seconds)</em> in the configuration.</li>
+    <li>A timeout usually means an infinite loop in the student's code — no fix on your side is needed.</li>
+</ul>
+
+<h3>Output is FAIL despite seemingly correct output</h3>
+<p><strong>Symptom:</strong> You can see the output looks right, but IAE reports FAIL.</p>
+<p><strong>Common causes:</strong></p>
+<ul>
+    <li>Extra or missing trailing newline in the expected output file.</li>
+    <li>Trailing spaces at the end of a line.</li>
+    <li>The program prints to <em>stderr</em> instead of <em>stdout</em> — IAE only compares stdout.</li>
+    <li>Encoding mismatch: save the expected output file as UTF-8.</li>
+</ul>
+
+<hr style="margin-top: 3rem; border-color: #dde3ee;"/>
+<p style="color: #888; font-size: 0.9em;">IAE v2.0.0 &mdash; CE316 &mdash; Izmir University of Economics, Faculty of Engineering.</p>
+
 </body>
 </html>

@@ -16,6 +16,7 @@
         <Label fx:id="statFailLabel" text="Fail: 0" styleClass="stat-chip, stat-chip-fail"/>
         <Label fx:id="statErrorLabel" text="Errors: 0" styleClass="stat-chip, stat-chip-error"/>
         <Button text="Refresh" onAction="#refreshResults" styleClass="secondary-button"/>
+        <Button text="Export CSV" onAction="#exportReport" styleClass="secondary-button"/>
     </HBox>
 
     <TableView fx:id="resultsTable" VBox.vgrow="ALWAYS" styleClass="results-table"

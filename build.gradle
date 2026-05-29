@@ -6,7 +6,11 @@ plugins {
 }
 
 group = 'com.iae'
-version = '1.0.0'
+version = '2.0.0'
+
+
+
+
 
 // Masaüstü yolundaki ü karakteri Gradle test-worker classpath encoding'ini bozuyor
 buildDir = 'C:/tmp/iae-build'

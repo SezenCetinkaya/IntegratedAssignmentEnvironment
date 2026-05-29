@@ -16,7 +16,10 @@ import javafx.scene.control.TextArea;
 import javafx.util.Duration;
 import javafx.stage.FileChooser;
 import java.io.File;
+import java.io.FileOutputStream;
+import java.io.OutputStreamWriter;
 import java.io.PrintWriter;
+import java.nio.charset.StandardCharsets;
 
 import java.util.List;
 
@@ -105,15 +108,6 @@ public class ResultsController {
         });
 
         UiAnimations.applyCardShadow(resultsTable);
-
-        // Force table headings to a darker color once the skin renders
-        resultsTable.skinProperty().addListener((obs, old, skin) -> {
-            if (skin != null) {
-                resultsTable.lookupAll(".column-header .label").forEach(n -> 
-                        n.setStyle("-fx-text-fill: #2c3e50; -fx-font-weight: bold;")
-                );
-            }
-        });
     }
 
     public void playEntranceAnimation() {
@@ -169,78 +163,43 @@ public class ResultsController {
         updateStats(List.of(), false);
     }
 
-    // ============================================================
-    // TODO [OWNER: Sıla Karabağ (DB + Reports)] [PHASE: 2] [REQ: 9]
-    // GÖREV: CSV export uygula — Results tablosunu dosyaya aktar
-    // AÇIKLAMA:
-    //   Sonuçları dışa aktarma butonu/menüsü yok. Hoca sonuçları başka araçlara
-    //   taşıyabilmeli. Minimum: CSV. Sonradan PDF eklenebilir.
-    // ADIMLAR:
-    //   1. FXML'de File menüsüne "Export Results..." menü öğesi ekle (Uğur ile koordine).
-    //   2. Bu metodu @FXML ile işaretle ve handler olarak bağla.
-    //   3. Metod gövdesi:
-    //      FileChooser fc = new FileChooser();
-    //      fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV", "*.csv"));
-    //      File f = fc.showSaveDialog(resultsTable.getScene().getWindow());
-    //      if (f == null) return;
-    //      try (PrintWriter pw = new PrintWriter(f)) {
-    //          pw.println("studentId,compileStatus,runStatus,executionTimeMs,error");
-    //          for (StudentResult r : tableData) {
-    //              pw.printf("%s,%s,%s,%d,\"%s\"%n",
-    //                  r.getStudentId(), r.getCompileStatus(), r.getRunStatus(),
-    //                  r.getExecutionTimeMs() == null ? 0 : r.getExecutionTimeMs(),
-    //                  r.getCompileErrorLog() == null ? "" :
-    //                      r.getCompileErrorLog().replace("\"", "\"\""));
-    //          }
-    //      }
-    // KABUL KRİTERİ:
-    //   Excel'de açıldığında satırlar bozulmadan görünüyor, virgül/quote escape doğru.
-    // ============================================================
     @FXML
     public void exportReport() {
-
-
         FileChooser fc = new FileChooser();
-
-        fc.getExtensionFilters().add(
-                new FileChooser.ExtensionFilter("CSV Files", "*.csv")
-        );
-
+        fc.getExtensionFilters().add(new FileChooser.ExtensionFilter("CSV Files", "*.csv"));
         File file = fc.showSaveDialog(resultsTable.getScene().getWindow());
+        if (file == null) return;
 
-        if (file == null) {
-            return;
-        }
-
-        try (PrintWriter pw = new PrintWriter(file)) {
-
-            pw.println("studentId,compileStatus,runStatus,executionTimeMs,error");
-
+        try (PrintWriter pw = new PrintWriter(
+                new OutputStreamWriter(new FileOutputStream(file), StandardCharsets.UTF_8))) {
+            // BOM — Excel'in UTF-8'i otomatik tanıması için
+            pw.print('﻿');
+            // sep= satırı — Türkçe/Avrupa Excel'ine ayracın ; olduğunu bildirir
+            pw.println("sep=;");
+            pw.println("Student ID;ZIP File;Compile;Result;Time (ms);Evaluated At;Error Log");
             for (StudentResult r : tableData) {
-
-                String error = r.getCompileErrorLog() == null
-                        ? ""
-                        : r.getCompileErrorLog().replace("\"", "\"\"");
-
-                int time = r.getExecutionTimeMs() == null
-                        ? 0
-                        : r.getExecutionTimeMs();
-
-                pw.printf(
-                        "%s,%s,%s,%d,\"%s\"%n",
-                        r.getStudentId(),
-                        r.getCompileStatus(),
-                        r.getRunStatus(),
+                String time = r.getExecutionTimeMs() == null ? "" : String.valueOf(r.getExecutionTimeMs());
+                pw.printf("%s;%s;%s;%s;%s;%s;%s%n",
+                        csvField(r.getStudentId()),
+                        csvField(r.getZipFilename()),
+                        csvField(r.getCompileStatus()),
+                        csvField(r.getRunStatus()),
                         time,
-                        error
-                );
+                        csvField(r.getEvaluatedAt()),
+                        csvField(r.getCompileErrorLog()));
             }
-
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
-
+    private static String csvField(String value) {
+        if (value == null || value.isEmpty()) return "";
+        // Noktalı virgül, çift tırnak veya newline içeren alanlar tırnak içine alınır
+        if (value.contains(";") || value.contains("\"") || value.contains("\n") || value.contains("\r")) {
+            return "\"" + value.replace("\"", "\"\"") + "\"";
+        }
+        return value;
     }
 
     @FXML
