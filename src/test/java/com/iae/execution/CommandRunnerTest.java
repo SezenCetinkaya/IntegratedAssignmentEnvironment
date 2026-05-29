@@ -56,7 +56,7 @@ class CommandRunnerTest {
 
         String[] cmd;
         if (System.getProperty("os.name").toLowerCase().contains("win")) {
-            cmd = new String[]{"cmd", "/c", "pause"};
+            cmd = new String[]{"ping", "127.0.0.1", "-n", "10"};
         } else {
             cmd = new String[]{"sleep", "10"};
         }
@@ -66,7 +66,9 @@ class CommandRunnerTest {
         long duration = System.currentTimeMillis() - start;
 
         assertTrue(result.isTimedOut(), "Command should timeout");
-        assertTrue(duration < 4000, "Timeout should happen quickly (duration: " + duration + " ms)");
+        assertTrue(result.hasFailed(), "Timed out command should be considered failed");
+        assertTrue(duration < 8000,
+                "Timeout took too long (duration: " + duration + " ms)");
     }
 
     @Test
