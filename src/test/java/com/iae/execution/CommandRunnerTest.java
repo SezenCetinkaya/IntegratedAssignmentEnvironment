@@ -67,7 +67,7 @@ class CommandRunnerTest {
 
         assertTrue(result.isTimedOut(), "Command should timeout");
         assertTrue(result.hasFailed(), "Timed out command should be considered failed");
-        assertTrue(duration < 8000,
+        assertTrue(duration < 4000,
                 "Timeout took too long (duration: " + duration + " ms)");
     }
 
