@@ -70,6 +70,19 @@ public class MainController {
     public void initialize() {
         setupVisualEffects();
         updateProjectUI();
+
+        projectNameField.setEditable(true);
+        submissionDirField.setEditable(true);
+        expectedOutputField.setEditable(true);
+        runArgsField.setEditable(true);
+
+        configNameField.setEditable(false);
+        configNameField.setTooltip(new Tooltip("Double-click to change configuration"));
+        configNameField.setOnMouseClicked(e -> {
+            if (currentProject != null && e.getClickCount() == 2) {
+                changeConfiguration();
+            }
+        });
     }
 
     @FXML
@@ -77,6 +90,51 @@ public class MainController {
         if (resultsPanelController != null) {
             resultsPanelController.exportReport();
         }
+    }
+
+    private void changeConfiguration() {
+        List<Configuration> configs = configDAO.findAll();
+        Dialog<Configuration> dialog = new Dialog<>();
+        dialog.setTitle("Change Configuration");
+        dialog.setHeaderText("Select a new language configuration");
+        dialog.getDialogPane().getButtonTypes().addAll(ButtonType.OK, ButtonType.CANCEL);
+
+        ComboBox<Configuration> configCombo = new ComboBox<>();
+        configCombo.getItems().setAll(configs);
+        configCombo.setConverter(configurationLabelConverter());
+        configCombo.setCellFactory(listView -> new ListCell<>() {
+            @Override
+            protected void updateItem(Configuration item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatConfigurationLabel(item));
+            }
+        });
+        configCombo.setButtonCell(new ListCell<>() {
+            @Override
+            protected void updateItem(Configuration item, boolean empty) {
+                super.updateItem(item, empty);
+                setText(empty || item == null ? null : formatConfigurationLabel(item));
+            }
+        });
+        configCombo.setMaxWidth(Double.MAX_VALUE);
+
+        if (currentConfiguration != null) {
+            configCombo.getItems().stream()
+                    .filter(c -> c.getConfigId() == currentConfiguration.getConfigId())
+                    .findFirst()
+                    .ifPresent(configCombo::setValue);
+        }
+        
+        dialog.getDialogPane().setContent(configCombo);
+        dialog.setResultConverter(btn -> btn == ButtonType.OK ? configCombo.getValue() : null);
+
+        dialog.showAndWait().ifPresent(c -> {
+            currentConfiguration = c;
+            currentProject.setConfigId(c.getConfigId());
+            configNameField.setText(c.getName());
+            projectDAO.update(currentProject);
+            setStatus("Configuration updated.", "status-label-success");
+        });
     }
 
     private void setupVisualEffects() {
@@ -235,26 +293,6 @@ public class MainController {
         projectCard.getStyleClass().add("section-card-accent");
     }
 
-    // ============================================================
-    // TODO [OWNER: Uğur Emin Baynal (GUI) + Sıla Karabağ (DB)] [PHASE: 1] [REQ: 3, 10]
-    // GÖREV: Open Project ekranı bayat veri gösteriyor; config değişmeden kalıyor
-    // AÇIKLAMA:
-    //   Proje listesi cache'lenebiliyor veya UI yüklenirken önceki proje state'i kalıyor.
-    //   Hoca bu bug'ı raporladı (WhatsApp notu).
-    // ADIMLAR:
-    //   1. onOpenProject() içinde her seferinde DB'den taze çek: projectDAO.findAll()
-    //      (cachedProjects gibi bir field varsa kaldır).
-    //   2. Seçilen Project yüklenince UI alanlarını güncel değerlerle doldur:
-    //      currentProject = projectDAO.findById(selectedId);
-    //      Configuration config = configDAO.findById(currentProject.getConfigId());
-    //      configNameField.setText(config != null ? config.getName() : "");
-    //      submissionDirField.setText(currentProject.getSubmissionDir());
-    //      runArgsField.setText(currentProject.getRunArguments());
-    //      expectedOutputField.setText(currentProject.getExpectedOutputPath());
-    //   3. Config değişikliği varsa: currentProject.setConfigId(newConfig.getId());
-    //      projectDAO.update(currentProject);
-    // KABUL KRİTERİ: Proje aç → config combobox doğru config'i gösteriyor. Config değişikliği kalıcı.
-    // ============================================================
     @FXML
     public void onOpenProject() {
         List<Project> projects = projectDAO.findAll();
@@ -301,6 +339,7 @@ public class MainController {
             return;
         }
 
+        currentProject.setName(projectNameField.getText().trim());
         currentProject.setSubmissionDir(submissionDirField.getText().trim());
         currentProject.setExpectedOutputPath(expectedOutputField.getText().trim());
         currentProject.setRunArguments(runArgsField.getText().trim());
@@ -362,11 +401,16 @@ public class MainController {
             return;
         }
 
+        currentProject.setName(projectNameField.getText().trim());
         currentProject.setSubmissionDir(submissionsDir.getAbsolutePath());
         currentProject.setExpectedOutputPath(expectedFile.getAbsolutePath());
         currentProject.setRunArguments(runArgsField.getText().trim());
         projectDAO.update(currentProject);
 
+        projectNameField.setDisable(true);
+        configNameField.setDisable(true);
+        submissionDirField.setDisable(true);
+        expectedOutputField.setDisable(true);
         runButton.setDisable(true);
         browseSubmissionsBtn.setDisable(true);
         browseExpectedBtn.setDisable(true);
@@ -387,22 +431,7 @@ public class MainController {
             @Override
             protected List<StudentResult> call() {
                 SubmissionProcessor processor = new SubmissionProcessor();
-                // ============================================================
-                // TODO [OWNER: Uğur Emin Baynal (GUI)] [PHASE: 1] [REQ: 6, 8]
-                // GÖREV: runArgsField.getText() değerini processAll'a ilet
-                // AÇIKLAMA:
-                //   project.setRunArguments(...) yapılıyor ama bu değer processAll'a
-                //   parametre olarak geçilmiyor. Öğrenci programı argümanları almıyor.
-                // ADIMLAR:
-                //   1. processAll imzası runArguments parametresi alacak şekilde güncellendikten sonra:
-                //      processor.processAll(submissionsDir, config, expected, false,
-                //                           project.getRunArguments())
-                //   2. Alternatif: SubmissionProcessor'a project'i geç ve
-                //      processSingle içinde project.getRunArguments() oku.
-                // KABUL KRİTERİ:
-                //   GUI'ye "hello world" yazıp Run'a basınca processAll'a "hello world" iletiliyor.
-                // ============================================================
-                return processor.processAll(submissionsDir, config, expected, false);
+                return processor.processAll(submissionsDir, config, expected, false, project.getRunArguments());
             }
         };
 
@@ -507,11 +536,16 @@ public class MainController {
         expectedOutputField.setText(hasProject ? nullSafe(currentProject.getExpectedOutputPath()) : "");
         runArgsField.setText(hasProject ? nullSafe(currentProject.getRunArguments()) : "");
 
+        projectNameField.setDisable(!hasProject);
+        configNameField.setDisable(!hasProject);
+        submissionDirField.setDisable(!hasProject);
+        expectedOutputField.setDisable(!hasProject);
         browseSubmissionsBtn.setDisable(!hasProject);
         browseExpectedBtn.setDisable(!hasProject);
         runArgsField.setDisable(!hasProject);
         runButton.setDisable(!hasProject);
 
+        projectStatusLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 1.1em;");
         projectStatusLabel.setText(hasProject
                 ? "Project: " + currentProject.getName()
                 : "No project loaded");
@@ -526,10 +560,15 @@ public class MainController {
     }
 
     private void finishRun(String message, String statusStyle) {
-        runButton.setDisable(currentProject == null);
-        browseSubmissionsBtn.setDisable(currentProject == null);
-        browseExpectedBtn.setDisable(currentProject == null);
-        runArgsField.setDisable(currentProject == null);
+        boolean disabled = (currentProject == null);
+        projectNameField.setDisable(disabled);
+        configNameField.setDisable(disabled);
+        submissionDirField.setDisable(disabled);
+        expectedOutputField.setDisable(disabled);
+        runButton.setDisable(disabled);
+        browseSubmissionsBtn.setDisable(disabled);
+        browseExpectedBtn.setDisable(disabled);
+        runArgsField.setDisable(disabled);
         runProgress.setVisible(false);
         UiAnimations.stopSpin(runProgress);
         UiAnimations.stopPulse(runButton);
@@ -547,6 +586,7 @@ public class MainController {
         if (styleClass != null && !styleClass.isBlank()) {
             statusLabel.getStyleClass().add(styleClass);
         }
+        statusLabel.setStyle("-fx-font-weight: bold; -fx-font-size: 1.1em;");
         UiAnimations.crossfadeLabelText(statusLabel, text);
     }
 

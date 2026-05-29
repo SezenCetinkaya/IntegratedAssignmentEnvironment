@@ -56,8 +56,21 @@ public class ResultsController {
             @Override
             protected void updateItem(StudentResult item, boolean empty) {
                 super.updateItem(item, empty);
+                updateRowStyle();
+            }
+
+            @Override
+            public void updateSelected(boolean selected) {
+                super.updateSelected(selected);
+                updateRowStyle();
+            }
+
+            private void updateRowStyle() {
+                StudentResult item = getItem();
+                boolean empty = isEmpty();
                 getStyleClass().removeAll("row-pass", "row-fail", "row-error");
                 if (empty || item == null) {
+                    setStyle("");
                     return;
                 }
                 String run = nullSafe(item.getRunStatus());
@@ -70,6 +83,12 @@ public class ResultsController {
                         || "FILE NOT FOUND".equalsIgnoreCase(run)
                         || "EXTRACTION ERROR".equalsIgnoreCase(run)) {
                     getStyleClass().add("row-error");
+                }
+
+                if (isSelected()) {
+                    setStyle("-fx-text-background-color: white; -fx-text-fill: white; -fx-font-weight: bold;");
+                } else {
+                    setStyle("-fx-text-background-color: #2c3e50; -fx-text-fill: #2c3e50; -fx-font-weight: bold;");
                 }
             }
         });
@@ -86,6 +105,15 @@ public class ResultsController {
         });
 
         UiAnimations.applyCardShadow(resultsTable);
+
+        // Force table headings to a darker color once the skin renders
+        resultsTable.skinProperty().addListener((obs, old, skin) -> {
+            if (skin != null) {
+                resultsTable.lookupAll(".column-header .label").forEach(n -> 
+                        n.setStyle("-fx-text-fill: #2c3e50; -fx-font-weight: bold;")
+                );
+            }
+        });
     }
 
     public void playEntranceAnimation() {
