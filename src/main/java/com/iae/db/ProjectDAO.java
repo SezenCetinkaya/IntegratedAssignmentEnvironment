@@ -7,7 +7,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ProjectDAO {
-    private final DatabaseHelper dbHelper = new DatabaseHelper();
+    private final DatabaseHelper dbHelper;
+
+    public ProjectDAO() {
+        this(new DatabaseHelper());
+    }
+
+    ProjectDAO(DatabaseHelper dbHelper) {          // package-visible
+        this.dbHelper = dbHelper;
+    }
 
     public int insert(Project project) {
         String sql = "INSERT INTO Project(name, createdAt, lastRunAt, expectedOutputPath, submissionDir, runArguments, configId) VALUES(?,?,?,?,?,?,?)";

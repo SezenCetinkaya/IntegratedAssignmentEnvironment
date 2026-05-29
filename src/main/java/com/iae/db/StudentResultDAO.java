@@ -6,7 +6,15 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class StudentResultDAO {
-    private final DatabaseHelper dbHelper = new DatabaseHelper();
+    private final DatabaseHelper dbHelper;
+
+    public StudentResultDAO() {
+        this(new DatabaseHelper());
+    }
+
+    StudentResultDAO(DatabaseHelper dbHelper) {    // package-visible
+        this.dbHelper = dbHelper;
+    }
 
     public void insert(int projectId, StudentResult result) {
         String sql = "INSERT INTO StudentResult(projectId, studentId, zipFilename, compileStatus, runStatus, compileErrorLog, evaluatedAt, executionTimeMs) VALUES(?,?,?,?,?,?,?,?)";
@@ -41,6 +49,7 @@ public class StudentResultDAO {
                 res.setCompileErrorLog(rs.getString("compileErrorLog"));
                 res.setEvaluatedAt(rs.getString("evaluatedAt"));
 
+                // Senin düzelttiğin null-safe süre okuma mantığı
                 int ms = rs.getInt("executionTimeMs");
                 res.setExecutionTimeMs(rs.wasNull() ? null : ms);
 

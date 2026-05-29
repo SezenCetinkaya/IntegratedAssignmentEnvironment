@@ -6,7 +6,17 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ConfigurationDAO {
-    private final DatabaseHelper dbHelper = new DatabaseHelper();
+    private final DatabaseHelper dbHelper;
+
+    /** Production constructor — Uygulama normal çalışırken bunu kullanacak */
+    public ConfigurationDAO() {
+        this(new DatabaseHelper());
+    }
+
+    /** Test constructor — Test sınıfları geçici/izole DB enjekte edebilsin diye bunu kullanacak */
+    ConfigurationDAO(DatabaseHelper dbHelper) { // package-visible
+        this.dbHelper = dbHelper;
+    }
 
     public int insert(Configuration config) {
         String sql = "INSERT INTO Configuration(name, language, compilerPath, compileArgs, sourceFilename, runCommand, isInterpreted, timeoutSeconds) VALUES(?,?,?,?,?,?,?,?)";
@@ -42,23 +52,16 @@ public class ConfigurationDAO {
         }
     }
 
-    /**
-     * Inserts built-in C, Java, and Python templates when the database has no configurations yet.
-     */
     public void seedDefaultsIfEmpty() {
         if (count() > 0) {
             return;
         }
 
-        // NOT: CommandRunner.compile() her zaman sourceFilename'i sona ekler.
-        // Bu yüzden compileArgs içine kaynak dosya adı YAZILMAMALI.
-        // Üretilen komut: [compilerPath] [compileArgs...] [sourceFilename]
-
         Configuration c = new Configuration();
         c.setName("C Programming");
         c.setLanguage("C");
         c.setCompilerPath("gcc");
-        c.setCompileArgs("-o main");        // gcc -o main main.c
+        c.setCompileArgs("-o main");
         c.setSourceFilename("main.c");
         c.setRunCommand("main.exe");
         c.setInterpreted(false);
@@ -69,7 +72,7 @@ public class ConfigurationDAO {
         java.setName("Java");
         java.setLanguage("Java");
         java.setCompilerPath("javac");
-        java.setCompileArgs("");            // javac Main.java
+        java.setCompileArgs("");
         java.setSourceFilename("Main.java");
         java.setRunCommand("java -cp . Main");
         java.setInterpreted(false);
