@@ -7,6 +7,7 @@ public class Report {
     private int passedCount;
     private int failedCount;
     private int compileErrorCount;
+    private int errorCount;
     private double averageTimeMs;
 
     public void calculateStats(List<StudentResult> results) {
@@ -16,6 +17,7 @@ public class Report {
         this.passedCount = (int) results.stream().filter(r -> "PASS".equals(r.getRunStatus())).count();
         this.failedCount = (int) results.stream().filter(r -> "FAIL".equals(r.getRunStatus())).count();
         this.compileErrorCount = (int) results.stream().filter(r -> "COMPILE_ERROR".equals(r.getCompileStatus())).count();
+        this.errorCount = totalStudents - passedCount - failedCount;
 
         this.averageTimeMs = results.stream()
                 .filter(r -> r.getExecutionTimeMs() != null)
@@ -28,6 +30,7 @@ public class Report {
     public int getPassedCount() { return passedCount; }
     public int getFailedCount() { return failedCount; }
     public int getCompileErrorCount() { return compileErrorCount; }
+    public int getErrorCount() { return errorCount; }
     public double getAverageTimeMs() { return averageTimeMs; }
     public double getSuccessRate() { return totalStudents == 0 ? 0 : (double) passedCount / totalStudents * 100; }
 }

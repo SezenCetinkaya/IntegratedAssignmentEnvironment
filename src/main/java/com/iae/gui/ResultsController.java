@@ -228,7 +228,7 @@ public class ResultsController {
         String total = "Total: " + report.getTotalStudents();
         String pass = "Pass: " + report.getPassedCount();
         String fail = "Fail: " + report.getFailedCount();
-        String errors = "Errors: " + report.getCompileErrorCount();
+        String errors = "Errors: " + report.getErrorCount();
 
         if (animate && !results.isEmpty()) {
             UiAnimations.crossfadeLabelText(statTotalLabel, total);
