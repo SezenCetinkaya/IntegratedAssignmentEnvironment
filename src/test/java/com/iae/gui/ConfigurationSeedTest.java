@@ -29,10 +29,12 @@ class ConfigurationSeedTest {
 
         dao.seedDefaultsIfEmpty();
 
-        assertEquals(3, dao.count());
+        assertEquals(5, dao.count());
         assertNotNull(dao.findByName("C Programming"));
         assertNotNull(dao.findByName("Java"));
         assertNotNull(dao.findByName("Python"));
+        assertNotNull(dao.findByName("Haskell"));
+        assertNotNull(dao.findByName("Prolog"));
     }
 
     @Test
@@ -41,7 +43,7 @@ class ConfigurationSeedTest {
         dao.seedDefaultsIfEmpty();
         dao.seedDefaultsIfEmpty();
 
-        assertEquals(3, dao.count());
+        assertEquals(5, dao.count());
     }
 
     @Test

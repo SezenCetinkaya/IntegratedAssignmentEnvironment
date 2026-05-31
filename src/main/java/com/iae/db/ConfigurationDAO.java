@@ -89,6 +89,28 @@ public class ConfigurationDAO {
         python.setInterpreted(true);
         python.setTimeoutSeconds(30);
         insert(python);
+
+        Configuration haskell = new Configuration();
+        haskell.setName("Haskell");
+        haskell.setLanguage("Haskell");
+        haskell.setCompilerPath("ghc");
+        haskell.setCompileArgs("-o main.exe");
+        haskell.setSourceFilename("main.hs");
+        haskell.setRunCommand("main.exe");
+        haskell.setInterpreted(false);
+        haskell.setTimeoutSeconds(30);
+        insert(haskell);
+
+        Configuration prolog = new Configuration();
+        prolog.setName("Prolog");
+        prolog.setLanguage("Prolog");
+        prolog.setCompilerPath("swipl");
+        prolog.setCompileArgs("");
+        prolog.setSourceFilename("main.pl");
+        prolog.setRunCommand("swipl -q -s main.pl");
+        prolog.setInterpreted(true);
+        prolog.setTimeoutSeconds(30);
+        insert(prolog);
     }
 
     public List<Configuration> findAll() {

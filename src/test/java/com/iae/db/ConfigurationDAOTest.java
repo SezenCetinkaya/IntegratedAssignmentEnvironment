@@ -193,14 +193,14 @@ class ConfigurationDAOTest {
     // -----------------------------------------------------------------------
 
     @Test
-    @DisplayName("seedDefaultsIfEmpty() boş tabloya 3 varsayılan konfigürasyon eklemeli")
-    void seedDefaultsIfEmpty_addsThreeDefaults() {
+    @DisplayName("seedDefaultsIfEmpty() boş tabloya 5 varsayılan konfigürasyon eklemeli")
+    void seedDefaultsIfEmpty_addsFiveDefaults() {
         dao.seedDefaultsIfEmpty();
-        assertEquals(3, dao.count());
+        assertEquals(5, dao.count());
     }
 
     @Test
-    @DisplayName("seedDefaultsIfEmpty() C, Java ve Python konfigürasyonlarını içermeli")
+    @DisplayName("seedDefaultsIfEmpty() C, Java, Python, Haskell ve Prolog konfigürasyonlarını içermeli")
     void seedDefaultsIfEmpty_expectedLanguages() {
         dao.seedDefaultsIfEmpty();
         List<Configuration> all = dao.findAll();
@@ -211,6 +211,10 @@ class ConfigurationDAOTest {
                 "Java konfigürasyonu eklenmiş olmalı");
         assertTrue(all.stream().anyMatch(c -> "Python".equals(c.getLanguage())),
                 "Python konfigürasyonu eklenmiş olmalı");
+        assertTrue(all.stream().anyMatch(c -> "Haskell".equals(c.getLanguage())),
+                "Haskell konfigürasyonu eklenmiş olmalı");
+        assertTrue(all.stream().anyMatch(c -> "Prolog".equals(c.getLanguage())),
+                "Prolog konfigürasyonu eklenmiş olmalı");
     }
 
     @Test
@@ -238,6 +242,25 @@ class ConfigurationDAOTest {
         Configuration c = dao.findByName("C Programming");
         assertNotNull(c);
         assertFalse(c.isInterpreted());
+    }
+    @Test
+    @DisplayName("Haskell konfigürasyonu isInterpreted=false olarak eklenmeli")
+    void seedDefaultsIfEmpty_haskellIsCompiled() {
+        dao.seedDefaultsIfEmpty();
+
+        Configuration haskell = dao.findByName("Haskell");
+        assertNotNull(haskell);
+        assertFalse(haskell.isInterpreted());
+    }
+
+    @Test
+    @DisplayName("Prolog konfigürasyonu isInterpreted=true olarak eklenmeli")
+    void seedDefaultsIfEmpty_prologIsInterpreted() {
+        dao.seedDefaultsIfEmpty();
+
+        Configuration prolog = dao.findByName("Prolog");
+        assertNotNull(prolog);
+        assertTrue(prolog.isInterpreted());
     }
 
     // -----------------------------------------------------------------------
